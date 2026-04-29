@@ -3,8 +3,8 @@ services:
     name: te-system-backend
     runtime: python
     rootDir: backend
-    buildCommand: pip install -r requirements.txt && python -m app.seed
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: ALLOWED_ORIGINS
         value: https://your-app.netlify.app
