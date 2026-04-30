@@ -21,13 +21,10 @@ def _hash(pw: str) -> str:
 
 
 def run():
+    # Drop and recreate all tables to pick up schema changes (safe — seed always repopulates)
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
-
-    # Clear existing data
-    for table in [ExpenseItem, ExpenseReport, TravelRequest, PolicyRule, User]:
-        db.query(table).delete()
-    db.commit()
 
     # --- Users ---
     finance = User(
