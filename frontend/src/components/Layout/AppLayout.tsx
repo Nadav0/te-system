@@ -297,6 +297,21 @@ function Header() {
 }
 
 export default function AppLayout() {
+  const token = useAuthStore((s) => s.token)
+  const setAuth = useAuthStore((s) => s.setAuth)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    if (token && token !== 'demo') { setReady(true); return }
+    // No real token — auto-login as manager
+    login('manager@company.com', 'password')
+      .then((res) => setAuth(res.user, res.access_token))
+      .catch(() => setAuth(MOCK_USERS.manager, 'demo'))
+      .finally(() => setReady(true))
+  }, [])
+
+  if (!ready) return null
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
