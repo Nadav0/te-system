@@ -61,6 +61,7 @@ class ExpenseReportOut(BaseModel):
     submitted_at: Optional[datetime] = None
     reviewed_by: Optional[str] = None
     review_note: Optional[str] = None
+    paid_at: Optional[datetime] = None
     created_at: datetime
     employee: Optional[UserShort] = None
     reviewer: Optional[UserShort] = None

@@ -1,56 +1,60 @@
 import { useState } from 'react'
-import { TrendingUp, AlertTriangle, Download, Info } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { TrendingUp, AlertTriangle, Download, Info, CheckCircle } from 'lucide-react'
+import { listReimbursementQueue, markPaid, listExpenses } from '../../api/expenses'
 import { currency } from '../../utils/format'
-
-const QUEUE_ITEMS = [
-  {
-    id: 1,
-    name: 'Sarah Jenkins',
-    email: 'sarah.j@company.com',
-    dept: 'Engineering',
-    amount: 1240.0,
-    category: 'TRAVEL',
-    approvedBy: 'Marcus Aurelius',
-    duplicate: false,
-  },
-  {
-    id: 2,
-    name: 'David Chen',
-    email: 'd.chen@company.com',
-    dept: 'Product',
-    amount: 45.5,
-    category: 'MEALS',
-    approvedBy: 'Lena Meyer',
-    duplicate: true,
-  },
-  {
-    id: 3,
-    name: 'Elena Rodriguez',
-    email: 'e.rodriguez@company.com',
-    dept: 'Marketing',
-    amount: 3820.12,
-    category: 'SOFTWARE',
-    approvedBy: 'Marcus Aurelius',
-    duplicate: false,
-  },
-]
+import type { ExpenseReport } from '../../types'
+import Spinner from '../../components/Spinner'
 
 export default function ReimbursementQueue() {
+  const qc = useQueryClient()
   const [activeTab, setActiveTab] = useState<'reimburse' | 'flagged'>('reimburse')
-  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [justPaid, setJustPaid] = useState<Set<string>>(new Set())
 
-  const totalSelected = QUEUE_ITEMS.filter((i) => selected.has(i.id)).reduce(
-    (sum, i) => sum + i.amount,
-    0
-  )
+  const { data: queue = [], isLoading: qLoading } = useQuery<ExpenseReport[]>({
+    queryKey: ['reimbursement-queue'],
+    queryFn: listReimbursementQueue,
+  })
 
-  const toggleSelect = (id: number) => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+  const { data: flaggedRaw = [], isLoading: fLoading } = useQuery<ExpenseReport[]>({
+    queryKey: ['expenses', 'approved'],
+    queryFn: () => listExpenses('approved'),
+  })
+
+  const flagged = (flaggedRaw as ExpenseReport[]).filter((r) => r.has_violations && !r.paid_at)
+
+  const markPaidMutation = useMutation({
+    mutationFn: (id: string) => markPaid(id),
+    onSuccess: (_, id) => {
+      setJustPaid((prev) => new Set(prev).add(id))
+      setSelected((prev) => { const n = new Set(prev); n.delete(id); return n })
+      qc.invalidateQueries({ queryKey: ['reimbursement-queue'] })
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+    },
+  })
+
+  const processSelected = async () => {
+    for (const id of Array.from(selected)) {
+      await markPaid(id)
+    }
+    setSelected(new Set())
+    qc.invalidateQueries({ queryKey: ['reimbursement-queue'] })
+    qc.invalidateQueries({ queryKey: ['expenses'] })
   }
+
+  const isLoading = qLoading || fLoading
+  if (isLoading) return <Spinner className="h-96" />
+
+  const pendingTotal = (queue as ExpenseReport[]).reduce((sum, r) => sum + r.total_amount, 0)
+  const selectedTotal = (queue as ExpenseReport[])
+    .filter((r) => selected.has(r.id))
+    .reduce((sum, r) => sum + r.total_amount, 0)
+
+  const toggleSelect = (id: string) =>
+    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+
+  const items = activeTab === 'reimburse' ? (queue as ExpenseReport[]) : flagged
 
   return (
     <div className="p-8 pb-28">
@@ -64,28 +68,22 @@ export default function ReimbursementQueue() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-lg p-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-            Pending Reimbursement
-          </p>
-          <p className="text-2xl font-bold text-gray-900">$142,502</p>
-          <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-            <TrendingUp size={11} /> 12% vs last month
-          </p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Pending Reimbursement</p>
+          <p className="text-2xl font-bold text-gray-900">{currency(pendingTotal)}</p>
+          <p className="text-xs text-gray-500 mt-1">{queue.length} reports approved &amp; unpaid</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-            Flagged Violations
-          </p>
-          <p className="text-2xl font-bold text-red-600">24</p>
-          <p className="text-xs text-red-500 mt-1">Requires immediate audit</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Flagged Violations</p>
+          <p className="text-2xl font-bold text-red-600">{flagged.length}</p>
+          <p className="text-xs text-red-500 mt-1">{flagged.length > 0 ? 'Requires immediate audit' : 'All clear'}</p>
         </div>
         <div className="bg-black rounded-lg p-5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Queue Velocity
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Queue Velocity</p>
+          <p className="text-2xl font-bold text-white">
+            {queue.length === 0 ? '—' : `${queue.length} pending`}
           </p>
-          <p className="text-2xl font-bold text-white">4.2 Days Avg.</p>
           <div className="mt-2 h-1.5 bg-gray-700 rounded overflow-hidden">
-            <div className="h-full bg-white rounded" style={{ width: '65%' }} />
+            <div className="h-full bg-white rounded" style={{ width: queue.length > 0 ? '65%' : '0%' }} />
           </div>
         </div>
       </div>
@@ -95,95 +93,104 @@ export default function ReimbursementQueue() {
         <div className="flex">
           <button
             onClick={() => setActiveTab('reimburse')}
-            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'reimburse'
-                ? 'border-black text-black'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
-            }`}
+            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'reimburse' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
           >
-            TO REIMBURSE (14)
+            TO REIMBURSE ({queue.length})
           </button>
           <button
             onClick={() => setActiveTab('flagged')}
-            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'flagged'
-                ? 'border-black text-black'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
-            }`}
+            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'flagged' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
           >
-            FLAGGED VIOLATIONS (24)
+            FLAGGED VIOLATIONS ({flagged.length})
           </button>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Employee
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Dept
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Category
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Approved By
-              </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {QUEUE_ITEMS.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(item.id)}
-                      onChange={() => toggleSelect(item.id)}
-                      className="w-4 h-4 rounded border-gray-300 accent-black"
-                    />
-                    <div>
-                      <p className="font-semibold text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-400">{item.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-4 text-gray-600">{item.dept}</td>
-                <td className="px-4 py-4 font-semibold text-gray-900">
-                  ${item.amount.toFixed(2)}
-                </td>
-                <td className="px-4 py-4">
-                  <span className="px-2 py-0.5 border border-gray-300 text-xs font-semibold text-gray-700 rounded">
-                    {item.category}
-                  </span>
-                </td>
-                <td className="px-4 py-4">
-                  <p className="text-gray-700">{item.approvedBy}</p>
-                  {item.duplicate && (
-                    <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
-                      <AlertTriangle size={10} /> POSSIBLE DUPLICATE
-                    </p>
-                  )}
-                </td>
-                <td className="px-4 py-4 text-right">
-                  <button className="bg-black text-white text-xs font-semibold px-4 py-2 rounded hover:bg-gray-800 transition-colors">
-                    MARK AS PAID
-                  </button>
-                </td>
+        {items.length === 0 ? (
+          <div className="p-12 text-center text-gray-400">
+            <CheckCircle size={36} className="mx-auto mb-3 text-gray-300" />
+            <p className="font-semibold text-gray-500">
+              {activeTab === 'reimburse' ? 'No pending reimbursements' : 'No flagged violations'}
+            </p>
+            <p className="text-sm mt-1">
+              {activeTab === 'reimburse' ? 'All approved expenses have been paid.' : 'All approved reports are clean.'}
+            </p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                {activeTab === 'reimburse' && <th className="w-8 px-4 py-3" />}
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Employee</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Report</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Currency</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Dept</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {items.map((item) => {
+                const paid = justPaid.has(item.id)
+                return (
+                  <tr key={item.id} className={`hover:bg-gray-50 ${paid ? 'opacity-40' : ''}`}>
+                    {activeTab === 'reimburse' && (
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          disabled={paid}
+                          className="w-4 h-4 rounded border-gray-300 accent-black"
+                        />
+                      </td>
+                    )}
+                    <td className="px-4 py-4">
+                      <div>
+                        <p className="font-semibold text-gray-900">{item.employee?.full_name ?? '—'}</p>
+                        <p className="text-xs text-gray-400">{item.employee?.email ?? ''}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <p className="text-gray-800">{item.title}</p>
+                      {item.has_violations && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+                          <AlertTriangle size={10} /> HAS VIOLATIONS
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 font-semibold text-gray-900">
+                      {currency(item.total_amount)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="px-2 py-0.5 border border-gray-300 text-xs font-semibold text-gray-700 rounded">
+                        {item.currency}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-gray-600">{item.employee?.department ?? '—'}</td>
+                    <td className="px-4 py-4 text-right">
+                      {paid ? (
+                        <span className="text-xs text-green-600 font-semibold flex items-center justify-end gap-1">
+                          <CheckCircle size={13} /> PAID
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => markPaidMutation.mutate(item.id)}
+                          disabled={markPaidMutation.isPending}
+                          className="bg-black text-white text-xs font-semibold px-4 py-2 rounded hover:bg-gray-800 transition-colors disabled:opacity-50"
+                        >
+                          MARK AS PAID
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Admin Note */}
@@ -202,13 +209,16 @@ export default function ReimbursementQueue() {
       {selected.size > 0 && (
         <div className="fixed bottom-0 left-60 right-0 bg-white border-t border-gray-200 px-8 py-4 flex items-center justify-between z-20">
           <p className="text-sm font-semibold text-gray-900">
-            {selected.size} items selected &nbsp;&nbsp; Total: {currency(totalSelected)}
+            {selected.size} items selected &nbsp;&nbsp; Total: {currency(selectedTotal)}
           </p>
           <div className="flex gap-3">
             <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-semibold text-gray-700 rounded hover:bg-gray-50 transition-colors">
               <Download size={14} /> EXPORT TO CSV
             </button>
-            <button className="px-4 py-2 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors">
+            <button
+              onClick={processSelected}
+              className="px-4 py-2 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors"
+            >
               PROCESS SELECTED
             </button>
           </div>

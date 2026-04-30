@@ -1,11 +1,42 @@
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { CheckCircle } from 'lucide-react'
 import { useAuthStore } from '../../store/auth'
+import { updateMe } from '../../api/users'
 
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user)!
+  const setAuth = useAuthStore((s) => s.setAuth)
+  const token = useAuthStore((s) => s.token)!
+
+  const [fullName, setFullName] = useState(user.full_name)
+  const [email, setEmail] = useState(user.email)
+  const [profileError, setProfileError] = useState('')
+  const [profileSaved, setProfileSaved] = useState(false)
+
   const [notifications, setNotifications] = useState(true)
   const [emailDigest, setEmailDigest] = useState(false)
   const [approvalAlerts, setApprovalAlerts] = useState(true)
+
+  const updateMutation = useMutation({
+    mutationFn: () => updateMe({ full_name: fullName, email }),
+    onSuccess: (updated: any) => {
+      setAuth({ ...user, full_name: updated.full_name, email: updated.email }, token)
+      setProfileSaved(true)
+      setProfileError('')
+      setTimeout(() => setProfileSaved(false), 2000)
+    },
+    onError: (e: any) => {
+      setProfileError(e.response?.data?.detail ?? 'Failed to save changes')
+    },
+  })
+
+  const handleSave = () => {
+    setProfileError('')
+    if (!fullName.trim()) return setProfileError('Full name cannot be empty')
+    if (!email.trim()) return setProfileError('Email cannot be empty')
+    updateMutation.mutate()
+  }
 
   return (
     <div className="p-8 max-w-2xl">
@@ -24,7 +55,9 @@ export default function SettingsPage() {
           <div>
             <p className="font-semibold text-gray-900">{user.full_name}</p>
             <p className="text-sm text-gray-500">{user.email}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-wider mt-0.5 capitalize">{user.role}{user.department ? ` · ${user.department}` : ''}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mt-0.5 capitalize">
+              {user.role}{user.department ? ` · ${user.department}` : ''}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -32,7 +65,8 @@ export default function SettingsPage() {
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
             <input
               type="text"
-              defaultValue={user.full_name}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
             />
           </div>
@@ -40,14 +74,29 @@ export default function SettingsPage() {
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Email</label>
             <input
               type="email"
-              defaultValue={user.email}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
             />
           </div>
         </div>
-        <button className="mt-4 px-4 py-2 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors uppercase">
-          Save Changes
-        </button>
+        {profileError && (
+          <p className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{profileError}</p>
+        )}
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+            className="px-4 py-2 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors uppercase disabled:opacity-50"
+          >
+            {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
+          </button>
+          {profileSaved && (
+            <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
+              <CheckCircle size={15} /> Saved
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Notifications */}
@@ -75,7 +124,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Danger zone */}
+      {/* Account */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Account</h2>
         <button

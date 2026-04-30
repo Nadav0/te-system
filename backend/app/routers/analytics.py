@@ -31,3 +31,12 @@ def monthly_trend(db: Session = Depends(get_db), current_user: User = Depends(ge
 @router.get("/violations")
 def violations(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return analytics_service.get_violations_summary(db, current_user)
+
+
+@router.get("/recent-activity")
+def recent_activity(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return analytics_service.get_recent_activity(db, current_user, limit=limit)

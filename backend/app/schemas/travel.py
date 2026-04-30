@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, TYPE_CHECKING
 from datetime import date, datetime
 from app.schemas.user import UserShort
 
@@ -25,6 +25,16 @@ class TravelReviewRequest(BaseModel):
     review_note: Optional[str] = None
 
 
+class LinkedExpenseOut(BaseModel):
+    id: str
+    title: str
+    status: str
+    total_amount: float
+    currency: str
+
+    model_config = {"from_attributes": True}
+
+
 class TravelRequestOut(BaseModel):
     id: str
     employee_id: str
@@ -40,5 +50,6 @@ class TravelRequestOut(BaseModel):
     created_at: datetime
     employee: Optional[UserShort] = None
     reviewer: Optional[UserShort] = None
+    expense_reports: List[LinkedExpenseOut] = []
 
     model_config = {"from_attributes": True}

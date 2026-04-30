@@ -6,6 +6,7 @@ from app.models.travel import TravelRequest
 from app.models.user import User
 from app.schemas.travel import TravelRequestCreate, TravelRequestUpdate, TravelRequestOut, TravelReviewRequest
 from app.auth.dependencies import get_current_user
+from app.services import notification_service
 from typing import List, Optional
 
 router = APIRouter(prefix="/travel", tags=["travel"])
@@ -65,6 +66,15 @@ def submit_travel(tr_id: str, db: Session = Depends(get_db), current_user: User 
     tr = _get_own_draft(tr_id, db, current_user)
     tr.status = "submitted"
     tr.submitted_at = datetime.utcnow()
+    from app.models.user import User as UserModel
+    managers = db.query(UserModel).filter(UserModel.role.in_(["manager", "finance"])).all()
+    for mgr in managers:
+        notification_service.create(
+            db, mgr.id, "travel_submitted",
+            "New travel request submitted",
+            f"{current_user.full_name} submitted a travel request to {tr.destination}",
+            ref_id=tr.id, ref_type="travel",
+        )
     db.commit()
     db.refresh(tr)
     return tr
@@ -92,6 +102,13 @@ def review_travel(
         raise HTTPException(status_code=400, detail="action must be 'approve' or 'reject'")
     tr.reviewed_by = current_user.id
     tr.review_note = data.review_note
+    action_label = "approved" if data.action == "approve" else "rejected"
+    notification_service.create(
+        db, tr.employee_id, f"travel_{action_label}",
+        f"Travel request {action_label}",
+        f'Your trip to {tr.destination} was {action_label} by {current_user.full_name}' + (f': {data.review_note}' if data.review_note else ''),
+        ref_id=tr.id, ref_type="travel",
+    )
     db.commit()
     db.refresh(tr)
     return tr

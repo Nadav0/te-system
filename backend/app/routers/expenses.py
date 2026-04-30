@@ -13,6 +13,7 @@ from app.schemas.expense import (
 )
 from app.auth.dependencies import get_current_user
 from app.services.policy_service import check_item_violations
+from app.services import notification_service
 from app.config import settings
 from typing import List, Optional
 import aiofiles
@@ -56,6 +57,22 @@ def create_report(data: ExpenseReportCreate, db: Session = Depends(get_db), curr
     return report
 
 
+@router.get("/reimbursement-queue", response_model=List[ExpenseReportOut])
+def reimbursement_queue_top(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Returns approved-but-unpaid expense reports (finance only)."""
+    if current_user.role != "finance":
+        raise HTTPException(status_code=403, detail="Finance role required")
+    return (
+        db.query(ExpenseReport)
+        .filter(ExpenseReport.status == "approved", ExpenseReport.paid_at == None)  # noqa: E711
+        .order_by(ExpenseReport.submitted_at.asc())
+        .all()
+    )
+
+
 @router.get("/{report_id}", response_model=ExpenseReportOut)
 def get_report(report_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     report = db.query(ExpenseReport).filter(ExpenseReport.id == report_id).first()
@@ -89,6 +106,16 @@ def submit_report(report_id: str, db: Session = Depends(get_db), current_user: U
         raise HTTPException(status_code=400, detail="Cannot submit a report with no expense items")
     report.status = "submitted"
     report.submitted_at = datetime.utcnow()
+    # Notify managers/finance that a new report is pending review
+    from app.models.user import User as UserModel
+    managers = db.query(UserModel).filter(UserModel.role.in_(["manager", "finance"])).all()
+    for mgr in managers:
+        notification_service.create(
+            db, mgr.id, "expense_submitted",
+            "New expense report submitted",
+            f'{current_user.full_name} submitted "{report.title}"',
+            ref_id=report.id, ref_type="expense",
+        )
     db.commit()
     db.refresh(report)
     return report
@@ -116,6 +143,32 @@ def review_report(
         raise HTTPException(status_code=400, detail="action must be 'approve' or 'reject'")
     report.reviewed_by = current_user.id
     report.review_note = data.review_note
+    action_label = "approved" if data.action == "approve" else "rejected"
+    notification_service.create(
+        db, report.employee_id, f"expense_{action_label}",
+        f"Expense report {action_label}",
+        f'"{report.title}" was {action_label} by {current_user.full_name}' + (f': {data.review_note}' if data.review_note else ''),
+        ref_id=report.id, ref_type="expense",
+    )
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+@router.post("/{report_id}/mark-paid", response_model=ExpenseReportOut)
+def mark_paid(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != "finance":
+        raise HTTPException(status_code=403, detail="Finance role required")
+    report = db.query(ExpenseReport).filter(ExpenseReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if report.status != "approved":
+        raise HTTPException(status_code=400, detail="Only approved reports can be marked as paid")
+    report.paid_at = datetime.utcnow()
     db.commit()
     db.refresh(report)
     return report

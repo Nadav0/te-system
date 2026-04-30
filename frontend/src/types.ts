@@ -31,6 +31,7 @@ export interface ExpenseReport {
   submitted_at?: string
   reviewed_by?: string
   review_note?: string
+  paid_at?: string
   created_at: string
   employee?: User
   reviewer?: User
@@ -52,6 +53,19 @@ export interface TravelRequest {
   created_at: string
   employee?: User
   reviewer?: User
+  expense_reports?: Array<{ id: string; title: string; status: string; total_amount: number; currency: string }>
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  type: string
+  title: string
+  message: string
+  read: boolean
+  ref_id?: string
+  ref_type?: 'expense' | 'travel'
+  created_at: string
 }
 
 export interface PolicyRule {

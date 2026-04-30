@@ -35,3 +35,9 @@ export const uploadReceipt = (reportId: string, itemId: string, file: File) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   }).then((r) => r.data)
 }
+
+export const listReimbursementQueue = () =>
+  api.get('/expenses/reimbursement-queue').then((r) => r.data)
+
+export const markPaid = (id: string) =>
+  api.post(`/expenses/${id}/mark-paid`).then((r) => r.data)

@@ -1,44 +1,66 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { X, Upload, UserPlus } from 'lucide-react'
-import { listUsers } from '../../api/users'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { X, Upload, UserPlus, CheckCircle } from 'lucide-react'
+import { listUsers, createUser } from '../../api/users'
 import Spinner from '../../components/Spinner'
 
-const ROLES = ['Employee', 'Manager', 'Finance']
+const ROLES = ['employee', 'manager', 'finance']
+const ROLE_LABELS: Record<string, string> = { employee: 'Employee', manager: 'Manager', finance: 'Finance' }
 const DEPARTMENTS = ['Engineering', 'Product', 'Marketing', 'Operations', 'Accounting', 'Sales', 'Human Resources']
 
 function getInitials(name: string) {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 }
 
+const defaultForm = { name: '', email: '', role: 'employee', department: 'Engineering', password: '' }
+
 export default function UserManagement() {
+  const qc = useQueryClient()
   const [showModal, setShowModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState(true)
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    role: 'Employee',
-    department: 'Engineering',
-  })
+  const [form, setForm] = useState(defaultForm)
+  const [formError, setFormError] = useState('')
+  const [success, setSuccess] = useState(false)
 
   const { data: apiUsers = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: listUsers,
   })
 
-  const users =
-    (apiUsers as any[]).length > 0
-      ? (apiUsers as any[])
-      : [
-          { id: 1, full_name: 'James D.', email: 'james@company.com', department: 'Product', role: 'manager' },
-          { id: 2, full_name: 'Robert K.', email: 'robert@company.com', department: 'Operations', role: 'employee' },
-          { id: 3, full_name: 'Sarah M.', email: 'sarah@company.com', department: 'Accounting', role: 'finance' },
-        ]
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createUser({
+        full_name: form.name,
+        email: form.email,
+        role: form.role,
+        department: form.department,
+        password: form.password,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] })
+      setSuccess(true)
+      setTimeout(() => {
+        setShowModal(false)
+        setSuccess(false)
+        setForm(defaultForm)
+        setFormError('')
+      }, 1200)
+    },
+    onError: (e: any) => {
+      setFormError(e.response?.data?.detail ?? 'Failed to create user')
+    },
+  })
+
+  const handleSubmit = () => {
+    setFormError('')
+    if (!form.name.trim()) return setFormError('Full name is required')
+    if (!form.email.trim()) return setFormError('Email is required')
+    if (!form.password.trim() || form.password.length < 6)
+      return setFormError('Password must be at least 6 characters')
+    createMutation.mutate()
+  }
+
+  const users = (apiUsers as any[])
 
   if (isLoading) return <Spinner className="h-96" />
 
@@ -57,7 +79,7 @@ export default function UserManagement() {
             <Upload size={14} /> BULK IMPORT CSV
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => { setShowModal(true); setForm(defaultForm); setFormError(''); setSuccess(false) }}
             className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors"
           >
             <UserPlus size={14} /> ADD USER
@@ -77,18 +99,11 @@ export default function UserManagement() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Dept
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Dept</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -97,15 +112,20 @@ export default function UserManagement() {
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700 flex-shrink-0">
-                      {getInitials(u.full_name ?? u.name ?? '?')}
+                      {getInitials(u.full_name ?? '?')}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{u.full_name ?? u.name}</p>
+                      <p className="font-semibold text-gray-900">{u.full_name}</p>
                       <p className="text-xs text-gray-400">{u.email}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-4 text-gray-600">{u.department ?? '—'}</td>
+                <td className="px-4 py-4">
+                  <span className="px-2 py-0.5 border border-gray-200 text-xs font-semibold text-gray-600 rounded capitalize">
+                    {u.role}
+                  </span>
+                </td>
                 <td className="px-4 py-4">
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-black">
                     <span className="w-2 h-2 rounded-full bg-black" />
@@ -125,9 +145,7 @@ export default function UserManagement() {
         <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
           <span>Showing 1–{users.length} of {users.length} results</span>
           <div className="flex items-center gap-1">
-            <button className="w-7 h-7 border border-gray-200 rounded text-xs font-semibold bg-black text-white">
-              1
-            </button>
+            <button className="w-7 h-7 border border-gray-200 rounded text-xs font-semibold bg-black text-white">1</button>
           </div>
         </div>
       </div>
@@ -136,114 +154,120 @@ export default function UserManagement() {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-start justify-between mb-5">
-              <div>
-                <h2 className="text-xl font-black text-gray-900 uppercase">Add New User</h2>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mt-0.5">
-                  Configure Employee Access and Permissions
-                </p>
+            {success ? (
+              <div className="flex flex-col items-center py-8 gap-3">
+                <CheckCircle size={40} className="text-green-500" />
+                <p className="text-lg font-bold text-gray-900">User created!</p>
+                <p className="text-sm text-gray-500">The new account has been added.</p>
               </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-700 p-1"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Johnathan Smith"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  placeholder="john.smith@enterprise.com"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    System Role
-                  </label>
-                  <select
-                    value={form.role}
-                    onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
-                  >
-                    {ROLES.map((r) => (
-                      <option key={r}>{r}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    Department
-                  </label>
-                  <select
-                    value={form.department}
-                    onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
-                  >
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-start justify-between">
+            ) : (
+              <>
+                <div className="flex items-start justify-between mb-5">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Send Invitation Email
-                    </label>
+                    <h2 className="text-xl font-black text-gray-900 uppercase">Add New User</h2>
                     <p className="text-xs text-gray-400 uppercase tracking-wider mt-0.5">
-                      User will receive a secure login link
+                      Configure Employee Access and Permissions
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setInviteEmail(!inviteEmail)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
-                      inviteEmail ? 'bg-black' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        inviteEmail ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700 p-1">
+                    <X size={18} />
                   </button>
                 </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <button
-                onClick={() => setShowModal(false)}
-                className="py-2.5 border-2 border-gray-200 text-sm font-semibold text-gray-700 rounded hover:bg-gray-50 transition-colors uppercase"
-              >
-                Cancel
-              </button>
-              <button className="py-2.5 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors uppercase">
-                Create Account
-              </button>
-            </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Johnathan Smith"
+                      value={form.name}
+                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      placeholder="john.smith@enterprise.com"
+                      value={form.email}
+                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Temporary Password</label>
+                    <input
+                      type="password"
+                      placeholder="Min 6 characters"
+                      value={form.password}
+                      onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">System Role</label>
+                      <select
+                        value={form.role}
+                        onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
+                      >
+                        {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Department</label>
+                      <select
+                        value={form.department}
+                        onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-500"
+                      >
+                        {DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Send Invitation Email
+                        </label>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider mt-0.5">
+                          User will receive a secure login link
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setInviteEmail(!inviteEmail)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${inviteEmail ? 'bg-black' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${inviteEmail ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                  </div>
+                  {formError && (
+                    <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{formError}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-6">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="py-2.5 border-2 border-gray-200 text-sm font-semibold text-gray-700 rounded hover:bg-gray-50 transition-colors uppercase"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={createMutation.isPending}
+                    className="py-2.5 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors uppercase disabled:opacity-50"
+                  >
+                    {createMutation.isPending ? 'Creating…' : 'Create Account'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

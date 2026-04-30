@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from app.routers import auth, users, expenses, travel, policy, analytics
+from app.routers import auth, users, expenses, travel, policy, analytics, notifications, search
 from app.database import engine, Base
 import app.models  # noqa: F401 — ensure all models are registered
 
@@ -35,6 +35,8 @@ app.include_router(expenses.router)
 app.include_router(travel.router)
 app.include_router(policy.router)
 app.include_router(analytics.router)
+app.include_router(notifications.router)
+app.include_router(search.router)
 
 
 @app.get("/health")

@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from app.models.expense import ExpenseReport, ExpenseItem
+from app.models.travel import TravelRequest
 from app.models.user import User
+from datetime import datetime, timedelta
 
 
 def get_summary(db: Session, current_user: User) -> dict:
@@ -103,3 +105,66 @@ def get_violations_summary(db: Session, current_user: User) -> list[dict]:
 
     rows = q.group_by(ExpenseItem.category).all()
     return [{"category": r.category, "count": r.violation_count, "total": float(r.total_amount)} for r in rows]
+
+
+def get_recent_activity(db: Session, current_user: User, limit: int = 10) -> list[dict]:
+    """Returns recent expense and travel events, role-filtered."""
+    events = []
+
+    eq = db.query(ExpenseReport)
+    if current_user.role == "employee":
+        eq = eq.filter(ExpenseReport.employee_id == current_user.id)
+    elif current_user.role == "manager":
+        team_ids = [u.id for u in current_user.direct_reports] + [current_user.id]
+        eq = eq.filter(ExpenseReport.employee_id.in_(team_ids))
+    for r in eq.order_by(ExpenseReport.updated_at.desc()).limit(limit).all():
+        actor = r.employee.full_name if r.employee else "Unknown"
+        events.append({
+            "id": f"exp-{r.id}",
+            "type": "expense",
+            "title": _expense_event_title(r.status),
+            "sub": f"{actor} · {r.title} ({r.currency} {r.total_amount:,.2f})",
+            "time": r.updated_at.isoformat(),
+            "status": r.status,
+            "ref_id": r.id,
+        })
+
+    tq = db.query(TravelRequest)
+    if current_user.role == "employee":
+        tq = tq.filter(TravelRequest.employee_id == current_user.id)
+    elif current_user.role == "manager":
+        team_ids = [u.id for u in current_user.direct_reports] + [current_user.id]
+        tq = tq.filter(TravelRequest.employee_id.in_(team_ids))
+    for t in tq.order_by(TravelRequest.created_at.desc()).limit(limit).all():
+        actor = t.employee.full_name if t.employee else "Unknown"
+        events.append({
+            "id": f"trv-{t.id}",
+            "type": "travel",
+            "title": _travel_event_title(t.status),
+            "sub": f"{actor} · {t.destination}",
+            "time": t.created_at.isoformat(),
+            "status": t.status,
+            "ref_id": t.id,
+        })
+
+    events.sort(key=lambda e: e["time"], reverse=True)
+    return events[:limit]
+
+
+def _expense_event_title(status: str) -> str:
+    return {
+        "draft": "Expense draft created",
+        "submitted": "Expense report submitted",
+        "under_review": "Expense under review",
+        "approved": "Expense report approved",
+        "rejected": "Expense report rejected",
+    }.get(status, "Expense updated")
+
+
+def _travel_event_title(status: str) -> str:
+    return {
+        "draft": "Travel request drafted",
+        "submitted": "Travel request submitted",
+        "approved": "Travel request approved",
+        "rejected": "Travel request rejected",
+    }.get(status, "Travel request updated")
