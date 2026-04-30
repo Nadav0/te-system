@@ -28,10 +28,12 @@ function timeAgo(iso: string): string {
 function NotificationPanel({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const token = useAuthStore((s) => s.token)
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: listNotifications,
     refetchInterval: 30000,
+    enabled: !!token && token !== 'demo',
   })
 
   const markAllMutation = useMutation({
@@ -189,6 +191,7 @@ function SearchBar() {
 
 function Header() {
   const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
   const setAuth = useAuthStore((s) => s.setAuth)
   const [roleOpen, setRoleOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
@@ -200,6 +203,7 @@ function Header() {
     queryKey: ['notifications'],
     queryFn: listNotifications,
     refetchInterval: 30000,
+    enabled: !!token && token !== 'demo',
   })
   const unreadCount = (notifications as Notification[]).filter((n) => !n.read).length
 
