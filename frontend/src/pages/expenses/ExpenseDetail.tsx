@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Trash2, Upload, AlertTriangle, ChevronLeft, CheckCircle, XCircle } from 'lucide-react'
 import {
-  getExpense, addItem, deleteItem, submitExpense, reviewExpense, uploadReceipt,
+  getExpense, addItem, deleteItem, deleteExpense, submitExpense, reviewExpense, uploadReceipt,
 } from '../../api/expenses'
 import { useAuthStore } from '../../store/auth'
 import { currency, date, categoryLabel } from '../../utils/format'
@@ -32,6 +32,7 @@ export default function ExpenseDetail() {
   const qc = useQueryClient()
 
   const [showItemForm, setShowItemForm] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [reviewNote, setReviewNote] = useState('')
   const [reviewError, setReviewError] = useState('')
 
@@ -48,6 +49,13 @@ export default function ExpenseDetail() {
 
   const addItemMutation = useMutation({ mutationFn: (d: ItemForm) => addItem(id!, d), onSuccess: invalidate })
   const deleteItemMutation = useMutation({ mutationFn: (itemId: string) => deleteItem(id!, itemId), onSuccess: invalidate })
+  const deleteReportMutation = useMutation({
+    mutationFn: () => deleteExpense(id!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+      navigate('/expenses')
+    },
+  })
   const submitMutation = useMutation({ mutationFn: () => submitExpense(id!), onSuccess: invalidate })
   const reviewMutation = useMutation({
     mutationFn: ({ action }: { action: 'approve' | 'reject' }) =>
@@ -105,6 +113,25 @@ export default function ExpenseDetail() {
               >
                 {submitMutation.isPending ? 'Submitting…' : 'Submit for Approval'}
               </button>
+            )}
+            {canEdit && (
+              confirmDelete ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Delete this report?</span>
+                  <button
+                    className="btn-danger"
+                    onClick={() => deleteReportMutation.mutate()}
+                    disabled={deleteReportMutation.isPending}
+                  >
+                    {deleteReportMutation.isPending ? 'Deleting…' : 'Yes, delete'}
+                  </button>
+                  <button className="btn-secondary" onClick={() => setConfirmDelete(false)}>Cancel</button>
+                </div>
+              ) : (
+                <button className="btn-danger" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 size={15} /> Delete
+                </button>
+              )
             )}
           </div>
         }
