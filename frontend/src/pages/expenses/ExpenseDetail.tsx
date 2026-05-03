@@ -90,7 +90,7 @@ export default function ExpenseDetail() {
 
   return (
     <div className="p-8 max-w-4xl">
-      <button onClick={() => navigate('/expenses')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4">
         <ChevronLeft size={16} /> Back to Expenses
       </button>
 

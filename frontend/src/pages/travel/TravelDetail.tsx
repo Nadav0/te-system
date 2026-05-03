@@ -44,8 +44,8 @@ export default function TravelDetail() {
 
   return (
     <div className="p-8 max-w-3xl">
-      <button onClick={() => navigate('/travel')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4">
-        <ChevronLeft size={16} /> Back to Travel Requests
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4">
+        <ChevronLeft size={16} /> Back
       </button>
 
       <PageHeader
