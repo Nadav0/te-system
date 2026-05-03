@@ -91,7 +91,7 @@ export default function TravelDetail() {
           <div>
             <p className="text-xs text-gray-500">Duration</p>
             <p className="font-semibold text-gray-900">
-              {Math.ceil((new Date(tr.return_date).getTime() - new Date(tr.departure_date).getTime()) / 86400000) + 1} days
+              {Math.round((new Date(tr.return_date).getTime() - new Date(tr.departure_date).getTime()) / 86400000) + 1} days
             </p>
           </div>
         </div>

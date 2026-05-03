@@ -138,7 +138,7 @@ export default function ExpenseDetail() {
                   <button className="btn-secondary" onClick={() => setConfirmDelete(false)}>Cancel</button>
                 </div>
               ) : (
-                <button className="btn-danger" onClick={() => setConfirmDelete(true)}>
+                <button className="btn-danger" onClick={() => setConfirmDelete(true)} disabled={deleteReportMutation.isPending}>
                   <Trash2 size={15} /> Delete
                 </button>
               )

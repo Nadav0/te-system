@@ -135,6 +135,8 @@ export default function PolicyPage() {
 
   if (isLoading) return <Spinner className="h-96" />
 
+  const activeCount = (rules as PolicyRule[]).filter((r) => r.active).length
+
   return (
     <div className="p-8 flex gap-6">
       {/* Left: policies grid */}
@@ -149,7 +151,6 @@ export default function PolicyPage() {
         <div className="grid grid-cols-2 gap-4">
           {(rules as PolicyRule[]).map((rule) => {
             const isSelected = rule.id === selectedId
-            const rulesCount = 4
             return (
               <button
                 key={rule.id}
@@ -199,7 +200,7 @@ export default function PolicyPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 uppercase tracking-wider">Rules Count</p>
-                    <p className="text-sm font-bold text-gray-900">{rulesCount} Active</p>
+                    <p className="text-sm font-bold text-gray-900">{activeCount} Active</p>
                   </div>
                 </div>
               </button>

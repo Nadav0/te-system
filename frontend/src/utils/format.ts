@@ -11,6 +11,7 @@ export const statusLabel = (status: string) => {
     under_review: 'Under Review',
     approved: 'Approved',
     rejected: 'Rejected',
+    paid: 'Paid',
   }
   return map[status] ?? status
 }
