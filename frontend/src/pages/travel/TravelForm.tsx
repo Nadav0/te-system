@@ -12,7 +12,7 @@ const schema = z.object({
   purpose: z.string().min(10, 'Please provide more detail'),
   departure_date: z.string().min(1, 'Departure date required'),
   return_date: z.string().min(1, 'Return date required'),
-  estimated_budget: z.number().positive('Budget must be greater than 0'),
+  estimated_budget: z.number().min(1, 'Budget must be at least $1'),
 }).refine((d) => d.return_date >= d.departure_date, {
   message: 'Return date must be on or after departure',
   path: ['return_date'],

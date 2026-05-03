@@ -40,7 +40,8 @@ export default function TravelDetail() {
   if (!tr) return <div className="p-8 text-gray-500">Travel request not found</div>
 
   const canSubmit = tr.status === 'draft' && tr.employee_id === user.id
-  const canReview = (user.role === 'manager' || user.role === 'finance') && tr.status === 'submitted'
+  const canReview = (user.role === 'manager' || user.role === 'finance') &&
+    (tr.status === 'submitted' || tr.status === 'under_review')
 
   return (
     <div className="p-8 max-w-3xl">
@@ -111,7 +112,7 @@ export default function TravelDetail() {
         </div>
       )}
 
-      {tr.expense_reports?.length > 0 && (
+      {(tr.expense_reports?.length ?? 0) > 0 && (
         <div className="card mb-6">
           <h3 className="font-semibold text-gray-900 mb-3">Linked Expense Reports</h3>
           <div className="space-y-2">

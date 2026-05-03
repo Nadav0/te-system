@@ -22,7 +22,10 @@ export default function TravelList() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteTravel,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['travel'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['travel'] })
+      qc.invalidateQueries({ queryKey: ['analytics'] })
+    },
   })
 
   return (
@@ -44,11 +47,11 @@ export default function TravelList() {
             onClick={() => setFilter(s)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               filter === s
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'
+                ? 'bg-brand-600 text-white'
+                : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300'
             }`}
           >
-            {s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All'}
+            {s ? s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : 'All'}
           </button>
         ))}
       </div>

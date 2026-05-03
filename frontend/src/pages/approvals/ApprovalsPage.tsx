@@ -54,7 +54,7 @@ export default function ApprovalsPage() {
           </Link>
           <Link
             to="/travel/new"
-            className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded hover:bg-brand-700 transition-colors"
           >
             <Plus size={14} /> New Travel
           </Link>
@@ -68,13 +68,13 @@ export default function ApprovalsPage() {
             onClick={() => setTab('expenses')}
             className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
               tab === 'expenses'
-                ? 'border-black text-black'
+                ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
           >
             EXPENSE REPORTS
             {pendingExpenses > 0 && (
-              <span className="ml-2 px-1.5 py-0.5 bg-black text-white text-xs rounded-full">
+              <span className="ml-2 px-1.5 py-0.5 bg-brand-600 text-white text-xs rounded-full">
                 {pendingExpenses}
               </span>
             )}
@@ -83,13 +83,13 @@ export default function ApprovalsPage() {
             onClick={() => setTab('travel')}
             className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
               tab === 'travel'
-                ? 'border-black text-black'
+                ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
           >
             TRAVEL REQUESTS
             {pendingTravel > 0 && (
-              <span className="ml-2 px-1.5 py-0.5 bg-black text-white text-xs rounded-full">
+              <span className="ml-2 px-1.5 py-0.5 bg-brand-600 text-white text-xs rounded-full">
                 {pendingTravel}
               </span>
             )}
@@ -107,7 +107,7 @@ export default function ApprovalsPage() {
                 onClick={() => setExpenseFilter(s)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   expenseFilter === s
-                    ? 'bg-black text-white'
+                    ? 'bg-brand-600 text-white'
                     : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400'
                 }`}
               >
@@ -200,7 +200,7 @@ export default function ApprovalsPage() {
                 onClick={() => setTravelFilter(s)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   travelFilter === s
-                    ? 'bg-black text-white'
+                    ? 'bg-brand-600 text-white'
                     : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400'
                 }`}
               >

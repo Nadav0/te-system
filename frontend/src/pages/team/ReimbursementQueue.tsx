@@ -24,6 +24,9 @@ export default function ReimbursementQueue() {
 
   const flagged = (flaggedRaw as ExpenseReport[]).filter((r) => r.has_violations && !r.paid_at)
 
+  const [markPaidError, setMarkPaidError] = useState('')
+  const [processing, setProcessing] = useState(false)
+
   const markPaidMutation = useMutation({
     mutationFn: (id: string) => markPaid(id),
     onSuccess: (_, id) => {
@@ -31,16 +34,28 @@ export default function ReimbursementQueue() {
       setSelected((prev) => { const n = new Set(prev); n.delete(id); return n })
       qc.invalidateQueries({ queryKey: ['reimbursement-queue'] })
       qc.invalidateQueries({ queryKey: ['expenses'] })
+      qc.invalidateQueries({ queryKey: ['analytics'] })
     },
+    onError: () => setMarkPaidError('Failed to mark as paid. Please try again.'),
   })
 
   const processSelected = async () => {
-    for (const id of Array.from(selected)) {
-      await markPaid(id)
+    setProcessing(true)
+    setMarkPaidError('')
+    try {
+      for (const id of Array.from(selected)) {
+        await markPaid(id)
+        setJustPaid((prev) => new Set(prev).add(id))
+      }
+      setSelected(new Set())
+      qc.invalidateQueries({ queryKey: ['reimbursement-queue'] })
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+      qc.invalidateQueries({ queryKey: ['analytics'] })
+    } catch {
+      setMarkPaidError('Some payments failed to process. Please retry.')
+    } finally {
+      setProcessing(false)
     }
-    setSelected(new Set())
-    qc.invalidateQueries({ queryKey: ['reimbursement-queue'] })
-    qc.invalidateQueries({ queryKey: ['expenses'] })
   }
 
   const isLoading = qLoading || fLoading
@@ -77,12 +92,12 @@ export default function ReimbursementQueue() {
           <p className="text-2xl font-bold text-red-600">{flagged.length}</p>
           <p className="text-xs text-red-500 mt-1">{flagged.length > 0 ? 'Requires immediate audit' : 'All clear'}</p>
         </div>
-        <div className="bg-black rounded-lg p-5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Queue Velocity</p>
+        <div className="rounded-lg p-5 bg-brand-600">
+          <p className="text-xs font-semibold text-brand-200 uppercase tracking-wider mb-2">Queue Velocity</p>
           <p className="text-2xl font-bold text-white">
             {queue.length === 0 ? '—' : `${queue.length} pending`}
           </p>
-          <div className="mt-2 h-1.5 bg-gray-700 rounded overflow-hidden">
+          <div className="mt-2 h-1.5 bg-brand-400 rounded overflow-hidden">
             <div className="h-full bg-white rounded" style={{ width: queue.length > 0 ? '65%' : '0%' }} />
           </div>
         </div>
@@ -93,13 +108,13 @@ export default function ReimbursementQueue() {
         <div className="flex">
           <button
             onClick={() => setActiveTab('reimburse')}
-            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'reimburse' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'reimburse' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
           >
             TO REIMBURSE ({queue.length})
           </button>
           <button
             onClick={() => setActiveTab('flagged')}
-            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'flagged' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'flagged' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
           >
             FLAGGED VIOLATIONS ({flagged.length})
           </button>
@@ -143,7 +158,7 @@ export default function ReimbursementQueue() {
                           checked={selected.has(item.id)}
                           onChange={() => toggleSelect(item.id)}
                           disabled={paid}
-                          className="w-4 h-4 rounded border-gray-300 accent-black"
+                          className="w-4 h-4 rounded border-gray-300 accent-indigo-600"
                         />
                       </td>
                     )}
@@ -179,7 +194,7 @@ export default function ReimbursementQueue() {
                         <button
                           onClick={() => markPaidMutation.mutate(item.id)}
                           disabled={markPaidMutation.isPending}
-                          className="bg-black text-white text-xs font-semibold px-4 py-2 rounded hover:bg-gray-800 transition-colors disabled:opacity-50"
+                          className="bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded hover:bg-brand-700 transition-colors disabled:opacity-50"
                         >
                           MARK AS PAID
                         </button>
@@ -192,6 +207,12 @@ export default function ReimbursementQueue() {
           </table>
         )}
       </div>
+
+      {markPaidError && (
+        <div className="mb-4 px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {markPaidError}
+        </div>
+      )}
 
       {/* Admin Note */}
       <div className="bg-white border border-gray-200 rounded-lg p-4 flex gap-3">
@@ -217,9 +238,10 @@ export default function ReimbursementQueue() {
             </button>
             <button
               onClick={processSelected}
-              className="px-4 py-2 bg-black text-white text-sm font-semibold rounded hover:bg-gray-800 transition-colors"
+              disabled={processing}
+              className="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded hover:bg-brand-700 transition-colors disabled:opacity-50"
             >
-              PROCESS SELECTED
+              {processing ? 'PROCESSING…' : 'PROCESS SELECTED'}
             </button>
           </div>
         </div>

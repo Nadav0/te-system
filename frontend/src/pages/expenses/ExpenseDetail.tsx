@@ -35,6 +35,8 @@ export default function ExpenseDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [reviewNote, setReviewNote] = useState('')
   const [reviewError, setReviewError] = useState('')
+  const [uploadingItemId, setUploadingItemId] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState('')
 
   const { data: report, isLoading } = useQuery({
     queryKey: ['expense', id],
@@ -60,7 +62,7 @@ export default function ExpenseDetail() {
   const reviewMutation = useMutation({
     mutationFn: ({ action }: { action: 'approve' | 'reject' }) =>
       reviewExpense(id!, action, reviewNote || undefined),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); setReviewNote(''); setReviewError('') },
     onError: (e: any) => setReviewError(e.response?.data?.detail ?? 'Failed'),
   })
 
@@ -77,8 +79,16 @@ export default function ExpenseDetail() {
   }
 
   const handleReceiptUpload = async (itemId: string, file: File) => {
-    await uploadReceipt(id!, itemId, file)
-    invalidate()
+    setUploadingItemId(itemId)
+    setUploadError('')
+    try {
+      await uploadReceipt(id!, itemId, file)
+      invalidate()
+    } catch {
+      setUploadError('Upload failed. Please try again.')
+    } finally {
+      setUploadingItemId(null)
+    }
   }
 
   if (isLoading) return <Spinner className="h-96" />
@@ -199,6 +209,12 @@ export default function ExpenseDetail() {
         </div>
       )}
 
+      {uploadError && (
+        <div className="mb-4 px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {uploadError}
+        </div>
+      )}
+
       {/* Items table */}
       <div className="card p-0 overflow-hidden mb-6">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
@@ -242,16 +258,20 @@ export default function ExpenseDetail() {
                   <td className="px-4 py-3 text-center">
                     {item.receipt_url ? (
                       <a href={item.receipt_url} target="_blank" rel="noopener noreferrer"
-                        className="text-blue-600 text-xs hover:underline">View</a>
+                        className="text-brand-600 text-xs hover:underline">View</a>
                     ) : canEdit ? (
-                      <label className="cursor-pointer text-gray-400 hover:text-blue-600 transition-colors">
-                        <Upload size={14} />
-                        <input type="file" className="hidden" accept="image/*,.pdf"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0]
-                            if (f) handleReceiptUpload(item.id, f)
-                          }} />
-                      </label>
+                      uploadingItemId === item.id ? (
+                        <span className="text-xs text-gray-400">Uploading…</span>
+                      ) : (
+                        <label className="cursor-pointer text-gray-400 hover:text-brand-600 transition-colors">
+                          <Upload size={14} />
+                          <input type="file" className="hidden" accept="image/*,.pdf"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) handleReceiptUpload(item.id, f)
+                            }} />
+                        </label>
+                      )
                     ) : (
                       <span className="text-gray-300 text-xs">—</span>
                     )}
