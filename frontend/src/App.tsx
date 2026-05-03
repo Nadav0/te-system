@@ -16,6 +16,7 @@ import ExecutiveDashboard from './pages/team/ExecutiveDashboard'
 import UserManagement from './pages/team/UserManagement'
 import SettingsPage from './pages/settings/SettingsPage'
 import ApprovalsPage from './pages/approvals/ApprovalsPage'
+import ReportsPage from './pages/reports/ReportsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="travel/:id" element={<TravelDetail />} />
             <Route path="policy" element={<PolicyPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/team" replace />} />

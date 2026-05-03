@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, CheckSquare, Users, BarChart3, Settings,
+  LayoutDashboard, CheckSquare, Users, BarChart3, Settings, FileDown,
 } from 'lucide-react'
 import { useAuthStore } from '../../store/auth'
 import type { User } from '../../types'
@@ -11,6 +11,7 @@ function navItems(role: User['role']) {
     { to: role === 'finance' ? '/policy' : '/approvals', icon: CheckSquare, label: 'Approvals' },
     { to: '/team', icon: Users, label: 'Team' },
     { to: '/analytics', icon: BarChart3, label: 'Reports' },
+    { to: '/reports', icon: FileDown, label: 'Export' },
     { to: '/settings', icon: Settings, label: 'Settings' },
   ]
 }
