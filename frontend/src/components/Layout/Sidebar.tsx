@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, CheckSquare, Users, BarChart3, Settings, Building2 } from 'lucide-react'
+import {
+  LayoutDashboard, CheckSquare, Users, BarChart3, Settings,
+} from 'lucide-react'
 import { useAuthStore } from '../../store/auth'
 import type { User } from '../../types'
 
@@ -17,38 +19,53 @@ export default function Sidebar() {
   const user = useAuthStore((s) => s.user)
   if (!user) return null
 
+  const initials = user.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() ?? 'U'
+  const role = user.role === 'finance' ? 'Finance Manager' : user.role === 'manager' ? 'Manager' : 'Employee'
+
   return (
-    <aside className="w-60 min-h-screen bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-      <div className="px-5 py-5 border-b border-gray-200">
-        <span className="text-sm font-black tracking-widest text-gray-900 uppercase">T&amp;E Platform</span>
-        <p className="text-xs text-gray-400 mt-0.5">Manager Dashboard</p>
+    <aside className="w-[220px] min-h-screen flex flex-col flex-shrink-0" style={{ background: '#1E1B4B' }}>
+      {/* Logo */}
+      <div className="px-5 pt-6 pb-5" style={{ borderBottom: '1px solid #2d2a6e' }}>
+        <p className="text-xl font-black text-white tracking-tight">Travelex</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest mt-0.5" style={{ color: '#818cf8' }}>
+          Enterprise T&amp;E
+        </p>
       </div>
 
+      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems(user.role).map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-black text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-[#c7d2fe] hover:bg-white/10 hover:text-white'
               }`
             }
           >
-            <Icon size={17} />
-            {label}
+            {({ isActive }) => (
+              <>
+                <Icon size={17} className={isActive ? 'text-brand-600' : 'text-[#818cf8]'} />
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      <div className="px-4 py-4 border-t border-gray-200">
+      {/* User */}
+      <div className="px-4 py-4 mx-3 mb-3 rounded-xl" style={{ background: '#16133a' }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded bg-gray-100 border border-gray-200 flex items-center justify-center">
-            <Building2 size={15} className="text-gray-500" />
+          <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {initials}
           </div>
-          <span className="text-sm text-gray-500">Org Logo</span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{user.full_name?.split(' ')[0]}</p>
+            <p className="text-[10px] truncate" style={{ color: '#818cf8' }}>{role}</p>
+          </div>
         </div>
       </div>
     </aside>

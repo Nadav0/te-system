@@ -155,11 +155,11 @@ function SearchBar() {
       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
       <input
         type="text"
-        placeholder="Search expenses, travel, people…"
+        placeholder="Search reports, trips, or employees…"
         value={query}
         onChange={(e) => handleChange(e.target.value)}
         onFocus={() => results.length > 0 && setOpen(true)}
-        className="w-full pl-9 pr-4 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:border-gray-400 placeholder:text-gray-400"
+        className="w-full pl-9 pr-4 py-2 text-sm bg-gray-100 border border-transparent rounded-full focus:outline-none focus:border-brand-300 focus:bg-white placeholder:text-gray-400 transition-colors"
       />
       {open && (
         <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 w-80">
@@ -227,7 +227,7 @@ function Header() {
   }
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center px-6 gap-4 sticky top-0 z-10 flex-shrink-0">
+    <header className="h-14 bg-white border-b border-gray-100 flex items-center px-6 gap-4 sticky top-0 z-10 flex-shrink-0 shadow-sm">
       <SearchBar />
 
       <div className="flex items-center gap-2 ml-auto">
@@ -235,13 +235,11 @@ function Header() {
         <div className="relative">
           <button
             onClick={() => { setNotifOpen(!notifOpen); setRoleOpen(false) }}
-            className="relative p-1.5 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+            className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-black text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
             )}
           </button>
           {notifOpen && (
@@ -254,41 +252,37 @@ function Header() {
           )}
         </div>
 
-        <button className="p-1.5 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
+        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
           <HelpCircle size={18} />
         </button>
-        <div className="w-px h-6 bg-gray-200 mx-1" />
 
         {/* Role switcher */}
         <div className="relative">
           <button
             onClick={() => { setRoleOpen(!roleOpen); setNotifOpen(false) }}
             disabled={switching}
-            className="flex items-center gap-2.5 hover:bg-gray-50 rounded-md px-2 py-1 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <div className="text-right">
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{firstName}</p>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider leading-tight">{roleLabel}</p>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-xs font-bold text-white">
+            <span className="text-sm font-semibold text-gray-800">Travel &amp; Expense</span>
+            <div className="w-6 h-6 rounded-full bg-brand-600 flex items-center justify-center text-[10px] font-bold text-white">
               {switching ? '…' : initials}
             </div>
-            <ChevronDown size={13} className="text-gray-400" />
+            <ChevronDown size={12} className="text-gray-400" />
           </button>
 
           {roleOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setRoleOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px] py-1">
+              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 min-w-[180px] py-1">
                 <p className="px-3 py-1.5 text-xs text-gray-400 uppercase tracking-wider font-semibold">Switch Role</p>
                 {ROLE_OPTIONS.map((opt) => (
                   <button
                     key={opt.key}
                     onClick={() => switchRole(opt.key)}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${user?.role === opt.key ? 'font-semibold text-black' : 'text-gray-700'}`}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${user?.role === opt.key ? 'font-semibold text-brand-600' : 'text-gray-700'}`}
                   >
                     {opt.label}
-                    {user?.role === opt.key && <span className="w-1.5 h-1.5 rounded-full bg-black" />}
+                    {user?.role === opt.key && <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />}
                   </button>
                 ))}
               </div>
@@ -317,7 +311,7 @@ export default function AppLayout() {
   if (!ready) return null
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen" style={{ background: '#F5F7FF' }}>
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
