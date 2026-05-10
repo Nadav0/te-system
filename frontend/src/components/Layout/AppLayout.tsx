@@ -2,6 +2,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { Bell, HelpCircle, ChevronDown, Search, FileText, Plane, User, CheckCheck } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import Sidebar from './Sidebar'
+import ChatWidget from '../ChatWidget/ChatWidget'
 import { useAuthStore, MOCK_USERS } from '../../store/auth'
 import { login } from '../../api/auth'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -319,6 +320,7 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <ChatWidget />
     </div>
   )
 }
