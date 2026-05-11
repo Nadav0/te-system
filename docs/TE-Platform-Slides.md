@@ -718,22 +718,22 @@ Modern design system applied to the implemented platform — frosted glass cards
 
 <div class="cols">
   <div class="col-box">
-    <h4>Design Tokens</h4>
+    <h4>Design Tokens (Mesh-inspired)</h4>
     <ul>
-      <li><strong>Brand:</strong> Indigo <code>#4F46E5</code> (<code>--brand-600: 79 70 229</code>)</li>
-      <li><strong>Light surface-0:</strong> faint blue-tinted canvas <code>#F8F8FC</code></li>
+      <li><strong>Brand:</strong> Periwinkle <code>#5C66F5</code> (<code>--brand-600: 92 102 245</code>) — updated from indigo after Mesh competitive analysis</li>
+      <li><strong>Light surface-0:</strong> lavender-grey canvas <code>#F5F6FA</code></li>
       <li><strong>Light surface-1:</strong> white cards <code>#FFFFFF</code></li>
-      <li><strong>Dark surface-0:</strong> true charcoal <code>#121212</code></li>
-      <li><strong>Dark surface-1:</strong> near-black cards — high contrast</li>
+      <li><strong>Dark surface-0:</strong> deep navy <code>#12121A</code></li>
+      <li><strong>Sidebar:</strong> always-dark <code>#1A1A28</code> — fixed in both themes</li>
     </ul>
   </div>
   <div class="col-box">
-    <h4>Apple / Craft Aesthetic</h4>
+    <h4>Mesh-Inspired Aesthetic</h4>
     <ul>
       <li><strong>.card:</strong> <code>bg-white/80 backdrop-blur-xl border border-black/7 rounded-[14px] shadow</code></li>
-      <li><strong>.glass:</strong> sidebar + header — <code>bg-white/75 backdrop-blur-xl</code></li>
+      <li><strong>Sidebar:</strong> dedicated CSS var tokens — dark panel independent of page theme</li>
+      <li><strong>Buttons:</strong> pill-shaped <code>rounded-full</code> matching Mesh CTAs</li>
       <li><strong>Font:</strong> Inter — SF Pro-inspired weight + tracking</li>
-      <li><strong>Labels:</strong> <code>10px semibold uppercase tracking-[0.1em]</code></li>
       <li><strong>Sidebar subtitle:</strong> "EXPENSE INTELLIGENCE"</li>
     </ul>
   </div>
@@ -776,30 +776,29 @@ Modern design system applied to the implemented platform — frosted glass cards
 
 <!-- _class: has-footer -->
 
-## Sidebar — Collapsible + Live Counts
+## Sidebar & Shell Upgrades
 
 <div class="accent-bar"></div>
 
 <div class="cols">
   <div class="col-box">
-    <h4>Sidebar Upgrades</h4>
+    <h4>Sidebar (Mesh-style)</h4>
     <ul>
+      <li><strong>Always-dark panel</strong> — fixed <code>#1A1A28</code> independent of page theme</li>
+      <li>Periwinkle active indicator + icon tint on selected item</li>
       <li>Collapsible to 60px icon-only mode (localStorage persisted)</li>
-      <li>Live pending count badges on nav items — dot on icon when collapsed, pill when expanded</li>
+      <li>Live pending count badges — dot on icon when collapsed, pill when expanded</li>
       <li>"EXPENSE INTELLIGENCE" branding (small-caps, letter-spaced)</li>
-      <li>Smooth CSS transition: 220px ↔ 60px</li>
-      <li>Collapse toggle button at bottom</li>
     </ul>
   </div>
   <div class="col-box">
-    <h4>Form & Table Upgrades</h4>
+    <h4>Application Shell</h4>
     <ul>
-      <li>2-column form layout with narrow Tips card on the right</li>
-      <li>Tips card: indigo top border + "Tips" heading in brand color</li>
-      <li>Uppercase field labels matching Figma spec</li>
-      <li>Department dropdown + Description textarea added</li>
-      <li>Sortable column headers on all tables (click to sort asc/desc)</li>
-      <li><strong>SortIcon</strong> — ChevronUp/Down/ChevronsUpDown indicator</li>
+      <li><strong>AI Chat Widget</strong> — Claude API, Sparkles button in header</li>
+      <li><strong>Notifications panel</strong> — real-time unread badge, mark-read, typed alerts</li>
+      <li><strong>Dark mode toggle</strong> — Sun/Moon, localStorage persisted, full CSS var swap</li>
+      <li><strong>Role switcher</strong> — header dropdown for demo account switching</li>
+      <li><strong>Global search</strong> — cross-record query bar</li>
     </ul>
   </div>
 </div>
@@ -842,6 +841,7 @@ Before implementing, competitive research was conducted across Ramp, Brex, Navan
 | Ramp / Airbase | Period toggle on analytics |
 | Spendesk | Gradient fills under area charts |
 | Expensify | Illustrated empty states with CTA |
+| Mesh Payments | Always-dark sidebar · periwinkle brand · pill buttons · SVG empty-state illustrations |
 | Ramp | Sortable column headers |
 | Figma designs | 2-column form layout + Tips card |
 
@@ -865,7 +865,8 @@ Before implementing, competitive research was conducted across Ramp, Brex, Navan
 | Wireframe prompts (3 portals) | Primary handoff artifact for visual design phase |
 | **Travelex — full-stack implementation** | React + FastAPI + SQLite; 3 role-based portals |
 | Consolidated export + NotebookLM corpus | Queryable design knowledge base |
-| **Visual design system + component library** | Frosted glass cards, 7 reusable components (Sparkline, Delta, KpiCard, etc.) |
+| **Visual design system + component library** | Mesh-inspired periwinkle brand; always-dark sidebar; pill buttons; 8 reusable components |
+| **Application shell** | AI Chat (Claude API), notifications, dark mode, role switcher, global search |
 | **50 UI screenshots (1440×900)** | Full coverage: 3 roles × all pages, light + dark mode |
 
 ---

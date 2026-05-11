@@ -312,7 +312,8 @@ The following artifacts were produced during the pre-design phase and subsequent
 | **User flow diagrams** | Diagrams | Step-by-step interaction flows for the core tasks in each portal (e.g., submit expense, approve report, assign GL code). Bridges the journey maps to screen-level design. |
 | **Wireframe prompts — 3 portals** | Structured text prompts | The primary handoff artifact for the visual design phase. Each prompt specifies: portal purpose, navigation structure, screen list, key components per screen, and data fields displayed. Does not prescribe visual treatment. |
 | **Consolidated Word export** | .docx | Aggregation of all above artifacts into a single document for ingestion into NotebookLM, enabling the design corpus to be queried as a knowledge base. |
-| **Visual design system + component library** | React/TypeScript + CSS custom properties | 7 reusable components; frosted glass aesthetic; full dark/light token set |
+| **Visual design system + component library** | React/TypeScript + CSS custom properties | 8 reusable components; Mesh-inspired periwinkle brand; always-dark sidebar; pill buttons; full dark/light token set |
+| **Application shell** | React/TypeScript | AI Chat widget (Claude API), notifications panel, dark mode toggle, role switcher, global search |
 | **50 UI screenshots (1440×900)** | PNG | Full coverage: 3 roles × all pages, light + dark mode, sidebar collapsed state |
 
 ---
@@ -389,12 +390,13 @@ Following the pre-design phase, the platform was extended with a comprehensive v
 
 ### 7.1 Design System
 
-The visual identity is built on a coherent set of design tokens and a consistent aesthetic direction:
+The visual identity is built on a coherent set of design tokens and a consistent aesthetic direction, updated in a second visual design pass to align with the Mesh Payments design language following competitive analysis.
 
 **Brand & Color**
-- Primary accent: Indigo (#4F46E5, `--brand-600`) — chosen for its professional, modern feel over the more common blue
-- Light mode: pure white cards (`--surface-1: 255 255 255`) on a faint blue-tinted page canvas (`--surface-0: 248 248 252`)
-- Dark mode: true charcoal page background (`--surface-0: 18 18 18 / #121212`) with near-black cards — high contrast, no grey-grey noise
+- Primary accent: Periwinkle blue (#5C66F5, `--brand-600`) — updated from indigo after Mesh Payments competitive analysis; warmer and more distinctive at scale
+- Light mode: light lavender-grey page canvas (`--surface-0: #F5F6FA`) with pure white cards (`--surface-1: #FFFFFF`) — matches Mesh's content area
+- Dark mode: deep navy page background (`--surface-0: #12121A`) with dark cards — consistent blue-dark tonal family
+- Sidebar: always-dark (`--sidebar-bg: #1A1A28`) regardless of light/dark mode — a fixed dark panel inspired directly by Mesh's navigation
 
 **Typography**
 - Inter font at system-UI scale (SF Pro-inspired weight and tracking values)
@@ -403,7 +405,8 @@ The visual identity is built on a coherent set of design tokens and a consistent
 
 **Cards & Surfaces**
 - `.card`: frosted glass — `bg-white/80 backdrop-blur-xl border border-black/7 rounded-[14px] shadow-sm`
-- `.glass`: sidebar and header — `bg-white/75 backdrop-blur-xl`
+- Sidebar: dedicated CSS variable tokens (`--sidebar-bg`, `--sidebar-active`, `--sidebar-hover`, `--sidebar-border`, `--sidebar-text`, `--sidebar-muted`) fixed independent of theme
+- Primary buttons: pill-shaped (`rounded-full`) matching Mesh's CTA style
 - Dark variants override automatically via `.dark` class on `<html>`
 
 ### 7.2 Dashboard Redesign
@@ -427,6 +430,8 @@ The dashboard was completely redesigned around a bento-style layout with modern 
 
 ### 7.3 Sidebar Upgrades
 
+- **Always-dark panel**: sidebar uses its own fixed dark CSS variables (`#1A1A28`) independent of the page light/dark mode — the sidebar stays dark in both themes, matching Mesh Payments' navigation pattern
+- **Periwinkle active indicator**: active nav items use a `bg-brand-400` left bar and icon tint; inactive items use `text-sidebar-muted` for clear hierarchy
 - **Collapsible mode**: sidebar collapses from 220px to 60px icon-only via a toggle button at the bottom; state persisted to `localStorage`
 - **Live badge counts**: pending approval counts shown on relevant nav items in real time (dot on icon when collapsed, pill badge when expanded)
 - **Branding**: subtitle updated to "EXPENSE INTELLIGENCE" (small-caps, letter-spaced)
@@ -459,7 +464,7 @@ Both the New Expense Report and New Travel Request forms were redesigned to matc
 
 ### 7.7 Component Library
 
-Seven reusable components were built during this phase and are used across the Dashboard and Analytics pages:
+Eight reusable components were built during this phase and are used across the Dashboard, Analytics, and list pages:
 
 | Component | Purpose |
 |---|---|
@@ -468,10 +473,21 @@ Seven reusable components were built during this phase and are used across the D
 | `KpiCard` | KPI tile with accent strip, sparkline, delta, and wide variant |
 | `ChartTooltip` | Custom dark/light-aware tooltip for all Recharts components |
 | `PeriodToggle` | 7d/30d/90d pill button group for chart time range control |
-| `EmptyState` | Illustrated empty state: icon + message + subtitle + CTA Link |
+| `EmptyState` | Mesh-style illustrated empty state: nested circular rings + custom SVG line-art per variant (expenses, travel, approvals, reports, analytics, team) in brand periwinkle; used on all list and approval pages |
 | `SortIcon` | ChevronUp/Down/ChevronsUpDown sort indicator for table headers |
+| `StatusBadge` | Colour-coded pill for all expense and travel status values |
 
-### 7.8 Screenshot Documentation
+### 7.8 Header & Application Shell Upgrades
+
+The application shell received a full redesign pass:
+
+- **AI Chat Widget**: a floating chat panel powered by the Claude API; accessible from a Sparkles button in the header. Supports free-text queries against the user's expense and travel data. Available to all roles.
+- **Notifications panel**: a slide-in panel (Bell icon, header) with real-time unread count badge, mark-all-read, and per-notification mark-read. Notifications are typed (expense, travel, system) and link directly to the relevant record.
+- **Dark mode toggle**: Sun/Moon icon in the header; persisted to `localStorage` via Zustand `useThemeStore`; applied as a `.dark` class on `<html>` to trigger all CSS variable swaps.
+- **Role switcher**: dropdown in the header for switching between Employee, Manager, and Finance demo accounts without logging out — designed for demo and course presentation contexts.
+- **Global search**: Command-K style search bar in the header; returns expenses and travel requests matching the query across all records.
+
+### 7.9 Screenshot Documentation
 
 50 screenshots captured at 1440×900 using Puppeteer-core with system Chrome:
 
@@ -498,7 +514,7 @@ Saved to: `/Users/nadavor/UX/UI/docs/screenshots/{role}/`
 
 **Iterative critique over first-pass acceptance.** The temptation in an AI-assisted workflow is to accept well-structured outputs at face value. Resisting that temptation and applying genuine critical review on each iteration pass was what separated useful, grounded deliverables from plausible-but-generic ones.
 
-**Competitive design research before implementing.** Reviewing Ramp, Brex, Navan, Expensify, Airbase, and Spendesk before the visual design phase identified 10 concrete modern patterns (bento grids, sparklines, period toggles, illustrated empty states) that produced a measurably more polished result than designing from scratch.
+**Competitive design research before implementing.** Reviewing Ramp, Brex, Navan, Expensify, Airbase, Spendesk, and Mesh Payments before and during the visual design phase identified concrete modern patterns (bento grids, sparklines, period toggles, illustrated empty states, always-dark sidebar navigation) that produced a measurably more polished result than designing from scratch. The second visual design pass — aligning the brand colour, sidebar, and button shape to the Mesh Payments design language — demonstrated how ongoing competitive reference improves visual coherence over time.
 
 ### What I Would Change
 
