@@ -56,9 +56,6 @@ export default function UserManagement() {
  onSuccess: () => {
  qc.invalidateQueries({ queryKey: ['users'] })
  setSuccess(true)
- if (inviteEmail) {
-  console.info(`[Invite] Sending invitation email to ${form.email}`)
- }
  setTimeout(() => {
  setShowModal(false)
  setSuccess(false)

@@ -26,8 +26,8 @@ const EXPENSE_STATUSES = ['draft', 'submitted', 'under_review', 'approved', 'rej
 const TRAVEL_STATUSES = ['draft', 'submitted', 'approved', 'rejected']
 
 function statusOptions(reportType: ReportType) {
- const statuses = reportType === 'travel' ? TRAVEL_STATUSES : EXPENSE_STATUSES
- return statuses
+ if (reportType === 'both') return [...new Set([...EXPENSE_STATUSES, ...TRAVEL_STATUSES])]
+ return reportType === 'travel' ? TRAVEL_STATUSES : EXPENSE_STATUSES
 }
 
 // ─── CSV Helpers ──────────────────────────────────────────────────────────────

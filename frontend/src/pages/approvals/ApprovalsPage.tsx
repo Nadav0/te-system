@@ -427,7 +427,7 @@ function TravelDetail({ id }: { id: string }) {
   if (isLoading) return <Spinner className="h-full" />
   if (!tr) return null
 
-  const canReview = tr.status === 'submitted'
+  const canReview = tr.status === 'submitted' || tr.status === 'under_review'
   const name = tr.employee?.full_name ?? 'Unknown'
   const dept = tr.employee?.department ?? ''
 
@@ -595,7 +595,7 @@ export default function ApprovalsPage() {
   // Auto-select first item when list loads or tab switches
   useEffect(() => {
     setSelectedId(activeList[0]?.id ?? null)
-  }, [tab, el, tl])
+  }, [tab, pendingExpenses.length, pendingTravel.length])
 
   return (
     // Full height minus the 56px (3.5rem) header

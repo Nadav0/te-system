@@ -139,7 +139,7 @@ export default function PolicyPage() {
   const activeCount = ruleList.filter((r) => r.active).length
   const totalCount = ruleList.length
   const healthScore = totalCount > 0 ? Math.round((activeCount / totalCount) * 100) : 0
-  const autoRejectCount = ruleList.filter((r) => r.active).length
+  const autoRejectCount = ruleList.filter((r) => r.active && (r.max_amount_per_item != null || r.max_amount_per_day != null)).length
 
   return (
     <div className="p-8 flex gap-6">

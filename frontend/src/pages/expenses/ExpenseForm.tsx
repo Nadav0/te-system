@@ -47,7 +47,7 @@ export default function ExpenseForm() {
     resolver: zodResolver(schema) as any,
     defaultValues: {
       currency:   'USD',
-      department: user?.department ?? 'Engineering',
+      department: user?.department ?? '',
     },
   })
 
