@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AppLayout from './components/Layout/AppLayout'
+import LoginPage from './pages/auth/LoginPage'
 import Dashboard from './pages/dashboard/Dashboard'
 import ExpenseList from './pages/expenses/ExpenseList'
 import ExpenseForm from './pages/expenses/ExpenseForm'
@@ -17,6 +18,7 @@ import UserManagement from './pages/team/UserManagement'
 import SettingsPage from './pages/settings/SettingsPage'
 import ApprovalsPage from './pages/approvals/ApprovalsPage'
 import ReportsPage from './pages/reports/ReportsPage'
+import CodingQueuePage from './pages/coding/CodingQueuePage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -27,8 +29,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<AppLayout />}>
-            <Route index element={<Navigate to="/team" replace />} />
+            <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="team" element={<TeamDashboard />} />
             <Route path="team/reimbursement" element={<ReimbursementQueue />} />
@@ -44,9 +47,10 @@ export default function App() {
             <Route path="policy" element={<PolicyPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="coding-queue" element={<CodingQueuePage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/team" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

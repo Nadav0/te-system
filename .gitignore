@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+*.egg-info/
+
+# Database
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+package-lock.json
+
+# Build output
+dist/
+build/
+
+# OS
+.DS_Store
+
+# Misc
+screenshots/
