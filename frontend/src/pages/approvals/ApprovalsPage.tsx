@@ -8,6 +8,7 @@ import { listExpenses, getExpense, reviewExpense } from '../../api/expenses'
 import { listTravel, getTravel, reviewTravel } from '../../api/travel'
 import { currency, date } from '../../utils/format'
 import StatusBadge from '../../components/StatusBadge'
+import EmptyState from '../../components/EmptyState'
 import Spinner from '../../components/Spinner'
 import type { ExpenseReport, TravelRequest } from '../../types'
 
@@ -647,11 +648,11 @@ export default function ApprovalsPage() {
           {(el || tl) ? (
             <Spinner className="h-32" />
           ) : activeList.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <CheckCircle size={28} className="text-green-400 mb-3" />
-              <p className="text-sm font-semibold text-ink-2">All caught up!</p>
-              <p className="text-xs text-ink-3 mt-1">No pending {tab} to review.</p>
-            </div>
+            <EmptyState
+              variant="approvals"
+              title="All caught up!"
+              description={`No pending ${tab} to review.`}
+            />
           ) : tab === 'expenses' ? (
             pendingExpenses.map((r) => (
               <ExpenseRow

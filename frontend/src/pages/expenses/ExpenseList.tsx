@@ -6,6 +6,7 @@ import { listExpenses, deleteExpense } from '../../api/expenses'
 import { currency, date } from '../../utils/format'
 import StatusBadge from '../../components/StatusBadge'
 import Spinner from '../../components/Spinner'
+import EmptyState from '../../components/EmptyState'
 import type { ExpenseReport } from '../../types'
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -283,15 +284,13 @@ export default function ExpenseList() {
       {isLoading ? (
         <Spinner className="h-64" />
       ) : reports.length === 0 ? (
-        <div className="card flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-surface-0 border border-edge flex items-center justify-center mb-4">
-            <Receipt size={22} className="text-ink-3" />
-          </div>
-          <p className="text-[14px] font-semibold text-ink-2 mb-1">No expense reports found</p>
-          <p className="text-[12px] text-ink-3 mb-5">Try adjusting your filters or create a new report</p>
-          <Link to="/expenses/new" className="btn-primary gap-2">
-            <Plus size={15} /> New Report
-          </Link>
+        <div className="card">
+          <EmptyState
+            variant="expenses"
+            title="No expense reports found"
+            description="Try adjusting your filters or create a new report"
+            action={<Link to="/expenses/new" className="btn-primary gap-2"><Plus size={15} /> New Report</Link>}
+          />
         </div>
       ) : (
         <div className="card p-0 overflow-hidden">

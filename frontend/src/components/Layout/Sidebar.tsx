@@ -92,10 +92,10 @@ export default function Sidebar() {
     <aside
       className={`${
         collapsed ? 'w-[60px]' : 'w-[220px]'
-      } min-h-screen flex flex-col flex-shrink-0 border-r border-edge glass transition-all duration-200`}
+      } min-h-screen flex flex-col flex-shrink-0 border-r border-sidebar-border bg-sidebar-bg transition-all duration-200`}
     >
       {/* Logo */}
-      <div className={`px-3 pt-5 pb-4 border-b border-edge/50 ${collapsed ? 'flex justify-center' : ''}`}>
+      <div className={`px-3 pt-5 pb-4 border-b border-sidebar-border ${collapsed ? 'flex justify-center' : ''}`}>
         {collapsed ? (
           <div className="w-8 h-8 rounded-xl bg-brand-600 flex items-center justify-center shadow-sm">
             <span className="text-[11px] font-bold text-white tracking-tight">TX</span>
@@ -106,8 +106,8 @@ export default function Sidebar() {
               <span className="text-[11px] font-bold text-white tracking-tight">TX</span>
             </div>
             <div>
-              <p className="text-[15px] font-semibold text-ink tracking-tight leading-none">Travelex</p>
-              <p className="text-[9px] font-semibold text-ink-3 mt-0.5 uppercase tracking-[0.12em]">Expense Intelligence</p>
+              <p className="text-[15px] font-semibold text-sidebar-text tracking-tight leading-none">Travelex</p>
+              <p className="text-[9px] font-semibold text-sidebar-muted mt-0.5 uppercase tracking-[0.12em]">Expense Intelligence</p>
             </div>
           </div>
         )}
@@ -127,18 +127,18 @@ export default function Sidebar() {
                   collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2'
                 } ${
                   isActive
-                    ? 'bg-brand-600/8 text-ink'
-                    : 'text-ink-2 hover:bg-surface-hover hover:text-ink'
+                    ? 'bg-sidebar-active text-sidebar-text'
+                    : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && !collapsed && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-600 rounded-r-full" />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-400 rounded-r-full" />
                   )}
                   <div className="relative flex-shrink-0">
-                    <Icon size={15} className={isActive ? 'text-brand-600' : 'text-ink-3'} />
+                    <Icon size={15} className={isActive ? 'text-brand-400' : 'text-sidebar-muted'} />
                     {count > 0 && collapsed && (
                       <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-brand-600 text-white text-[8px] font-bold flex items-center justify-center leading-none">
                         {count > 9 ? '9+' : count}
@@ -159,7 +159,7 @@ export default function Sidebar() {
       </nav>
 
       {/* User + Collapse toggle */}
-      <div className={`px-2 pb-4 pt-2 border-t border-edge/50 space-y-2`}>
+      <div className={`px-2 pb-4 pt-2 border-t border-sidebar-border space-y-2`}>
         {/* User row */}
         {collapsed ? (
           <div className="flex justify-center">
@@ -176,10 +176,10 @@ export default function Sidebar() {
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="text-[13px] font-medium text-ink truncate leading-tight">
+              <p className="text-[13px] font-medium text-sidebar-text truncate leading-tight">
                 {user.full_name?.split(' ')[0]}
               </p>
-              <p className="text-[11px] text-ink-3 truncate">{roleLabel}</p>
+              <p className="text-[11px] text-sidebar-muted truncate">{roleLabel}</p>
             </div>
           </div>
         )}
@@ -188,7 +188,7 @@ export default function Sidebar() {
         <button
           onClick={() => setCollapsed((c) => !c)}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={`w-full flex items-center rounded-lg px-2 py-2 text-ink-3 hover:bg-surface-hover hover:text-ink-2 transition-colors ${
+          className={`w-full flex items-center rounded-lg px-2 py-2 text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text transition-colors ${
             collapsed ? 'justify-center' : 'gap-2.5'
           }`}
         >

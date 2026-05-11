@@ -36,13 +36,14 @@ export default {
           2:       'rgb(var(--ink-2) / <alpha-value>)',
           3:       'rgb(var(--ink-3) / <alpha-value>)',
         },
-        // Sidebar aliases (point at the same surface vars)
+        // Sidebar — always dark, independent of light/dark theme
         sidebar: {
-          bg:     'rgb(var(--surface-0)     / <alpha-value>)',
-          active: 'rgb(var(--surface-1)     / <alpha-value>)',
-          text:   'rgb(var(--ink-2)         / <alpha-value>)',
-          border: 'rgb(var(--edge)          / <alpha-value>)',
-          bottom: 'rgb(var(--surface-1)     / <alpha-value>)',
+          bg:     'rgb(var(--sidebar-bg)     / <alpha-value>)',
+          active: 'rgb(var(--sidebar-active) / <alpha-value>)',
+          hover:  'rgb(var(--sidebar-hover)  / <alpha-value>)',
+          border: 'rgb(var(--sidebar-border) / <alpha-value>)',
+          text:   'rgb(var(--sidebar-text)   / <alpha-value>)',
+          muted:  'rgb(var(--sidebar-muted)  / <alpha-value>)',
         },
       },
     },

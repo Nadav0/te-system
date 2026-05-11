@@ -7,36 +7,45 @@
    ─────────────────────────────────────────────────────────── */
 :root {
   /* Light theme (default) */
-  --surface-0:     248 248 252;   /* #F8F8FC  page canvas (faint blue tint) */
+  --surface-0:     245 246 250;   /* #F5F6FA  page canvas (Mesh-style)      */
   --surface-1:     255 255 255;   /* #FFFFFF  pure white cards              */
   --surface-2:     245 245 252;   /* #F5F5FC  elevated modals               */
-  --surface-hover: 242 242 250;   /* #F2F2FA  hover state                   */
-  --edge:          222 222 235;   /* #DDDDE  subtle border                  */
-  --edge-hi:       200 200 218;   /* #C8C8DA  strong border                 */
+  --surface-hover: 237 238 246;   /* #EDEEF6  hover state                   */
+  --edge:          220 221 234;   /* #DCDDE  subtle border                  */
+  --edge-hi:       196 198 218;   /* #C4C6DA  strong border                 */
   --ink:            13  15  26;   /* #0D0F1A  primary text                  */
   --ink-2:          74  77 106;   /* #4A4D6A  muted text                    */
   --ink-3:         142 146 170;   /* #8E92AA  dim / captions                */
-  --brand-400:     129 140 248;   /* #818CF8  indigo-400                    */
-  --brand-500:     99  102 241;   /* #6366F1  indigo-500                    */
-  --brand-600:     79   70 229;   /* #4F46E5  indigo-600                    */
-  --brand-700:     67   56 202;   /* #4338CA  indigo-700                    */
+  --brand-400:     150 158 249;   /* #969EF9  periwinkle-400                */
+  --brand-500:     122 130 247;   /* #7A82F7  periwinkle-500                */
+  --brand-600:      92 102 245;   /* #5C66F5  periwinkle-600 (Mesh)         */
+  --brand-700:      74  85 220;   /* #4A55DC  periwinkle-700                */
+
+  /* Sidebar — always dark regardless of theme */
+  --sidebar-bg:      26  26  40;  /* #1A1A28 */
+  --sidebar-active:  40  42  62;  /* #282A3E */
+  --sidebar-hover:   32  33  52;  /* #202134 */
+  --sidebar-border:  40  42  62;  /* #282A3E */
+  --sidebar-text:   255 255 255;  /* white   */
+  --sidebar-muted:  130 133 165;  /* #8285A5 */
 }
 
 .dark {
   /* Dark theme — charcoal black */
-  --surface-0:      18  18  18;   /* #121212  page canvas                   */
-  --surface-1:      28  28  32;   /* #1C1C20  cards                         */
-  --surface-2:      38  38  44;   /* #26262C  elevated modals               */
-  --surface-hover:  42  42  50;   /* #2A2A32  hover state                   */
-  --edge:           52  52  62;   /* #34343E  subtle dark border            */
-  --edge-hi:        72  72  86;   /* #484856  strong dark border            */
+  --surface-0:      18  18  26;   /* #12121A  page canvas                   */
+  --surface-1:      26  26  38;   /* #1A1A26  cards                         */
+  --surface-2:      36  36  52;   /* #242434  elevated modals               */
+  --surface-hover:  40  42  58;   /* #282A3A  hover state                   */
+  --edge:           50  52  72;   /* #323448  subtle dark border            */
+  --edge-hi:        68  70  95;   /* #44465F  strong dark border            */
   --ink:           255 255 255;   /* #FFFFFF  pure white text               */
-  --ink-2:         175 175 190;   /* #AFAFBE  muted text                    */
-  --ink-3:         100 100 116;   /* #646474  dim / captions                */
-  --brand-400:     129 140 248;   /* #818CF8  indigo-400                    */
-  --brand-500:     99  102 241;   /* #6366F1  indigo-500                    */
-  --brand-600:     79   70 229;   /* #4F46E5  indigo-600                    */
-  --brand-700:     67   56 202;   /* #4338CA  indigo-700                    */
+  --ink-2:         175 175 195;   /* #AFAFC3  muted text                    */
+  --ink-3:         100 103 130;   /* #646782  dim / captions                */
+  --brand-400:     150 158 249;   /* #969EF9  periwinkle-400                */
+  --brand-500:     122 130 247;   /* #7A82F7  periwinkle-500                */
+  --brand-600:      92 102 245;   /* #5C66F5  periwinkle-600 (Mesh)         */
+  --brand-700:      74  85 220;   /* #4A55DC  periwinkle-700                */
+  /* Sidebar stays the same in dark mode */
 }
 
 @layer base {
@@ -51,7 +60,7 @@
 @layer components {
   /* ── Buttons ─────────────────────────────────────────────── */
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all
            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40
            disabled:opacity-40 disabled:cursor-not-allowed;
     letter-spacing: -0.01em;

@@ -7,6 +7,7 @@ import { currency, date } from '../../utils/format'
 import StatusBadge from '../../components/StatusBadge'
 import PageHeader from '../../components/PageHeader'
 import Spinner from '../../components/Spinner'
+import EmptyState from '../../components/EmptyState'
 import type { TravelRequest } from '../../types'
 
 const STATUSES = ['', 'draft', 'submitted', 'approved', 'rejected']
@@ -129,13 +130,13 @@ export default function TravelList() {
       {isLoading ? (
         <Spinner className="h-64" />
       ) : filtered.length === 0 ? (
-        <div className="card flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-surface-0 border border-edge flex items-center justify-center mb-4">
-            <Plane size={22} className="text-ink-3" />
-          </div>
-          <p className="text-[14px] font-semibold text-ink-2 mb-1">No travel requests found</p>
-          <p className="text-[12px] text-ink-3 mb-5">Try adjusting your filters or submit a new request</p>
-          <Link to="/travel/new" className="btn-primary gap-2"><Plus size={15} /> New Request</Link>
+        <div className="card">
+          <EmptyState
+            variant="travel"
+            title="No travel requests found"
+            description="Try adjusting your filters or submit a new request"
+            action={<Link to="/travel/new" className="btn-primary gap-2"><Plus size={15} /> New Request</Link>}
+          />
         </div>
       ) : (
         <div className="card p-0 overflow-hidden">
