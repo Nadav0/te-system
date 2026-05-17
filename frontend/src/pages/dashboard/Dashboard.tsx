@@ -184,7 +184,7 @@ function EmptyState({ icon: Icon, message, sub, cta, to }: {
       <div className="w-12 h-12 rounded-2xl bg-surface-0 border border-edge flex items-center justify-center mb-3">
         <Icon size={20} className="text-ink-3" />
       </div>
-      <p className="text-[13px] font-semibold text-ink-2 mb-0.5">{message}</p>
+      <p className="text-sm font-semibold text-ink-2 mb-0.5">{message}</p>
       <p className="text-[11px] text-ink-3 mb-4 leading-relaxed">{sub}</p>
       <Link to={to} className="btn-primary text-xs px-4 py-1.5 h-auto">{cta}</Link>
     </div>
@@ -288,7 +288,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-semibold text-ink tracking-tight">
             {greeting}, {firstName}
           </h1>
-          <p className="text-[13px] text-ink-3 mt-1">{roleLabel} · {dept}</p>
+          <p className="text-sm text-ink-3 mt-1">{roleLabel} · {dept}</p>
         </div>
         {user.role === 'employee' && (
           <Link to="/expenses/new" className="btn-primary gap-2">
@@ -346,7 +346,7 @@ export default function Dashboard() {
         <div className="card lg:col-span-2">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-[15px] font-semibold text-ink">Monthly Spend</h2>
+              <h2 className="text-base font-semibold text-ink">Monthly Spend</h2>
               <p className="text-[11px] text-ink-3 mt-0.5">Expense volume over time</p>
             </div>
             <PeriodToggle value={period} onChange={setPeriod} />
@@ -406,7 +406,7 @@ export default function Dashboard() {
         {/* Spend by Category — 1 col */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[15px] font-semibold text-ink">By Category</h2>
+            <h2 className="text-base font-semibold text-ink">By Category</h2>
             <span className="text-[10px] text-ink-3 border border-edge px-2 py-0.5 rounded-md">30 days</span>
           </div>
           {catBarData.length === 0 ? (
@@ -475,7 +475,7 @@ export default function Dashboard() {
         {/* Expense Reports */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[15px] font-semibold text-ink">
+            <h2 className="text-base font-semibold text-ink">
               {user.role === 'employee' ? 'My Expense Reports' : 'Pending Expense Approvals'}
             </h2>
             <Link to="/expenses" className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">
@@ -507,14 +507,14 @@ export default function Dashboard() {
                       <Icon size={14} className={color.icon} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-ink truncate leading-tight">{exp.title}</p>
+                      <p className="text-sm font-semibold text-ink truncate leading-tight">{exp.title}</p>
                       <p className="text-[11px] text-ink-3 mt-0.5 truncate">
                         {exp.employee?.full_name ?? 'You'} · {date(exp.created_at)}
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0 flex items-center gap-2">
                       <div>
-                        <p className="text-[13px] font-bold text-ink tabular-nums">{currency(exp.total_amount)}</p>
+                        <p className="text-sm font-bold text-ink tabular-nums">{currency(exp.total_amount)}</p>
                         <div className="mt-0.5 flex justify-end">
                           {exp.has_violations
                             ? <span className="badge badge-action_req">Action Req</span>
@@ -537,7 +537,7 @@ export default function Dashboard() {
         {/* Travel Requests */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[15px] font-semibold text-ink">
+            <h2 className="text-base font-semibold text-ink">
               {user.role === 'employee' ? 'My Travel Requests' : 'Pending Travel Approvals'}
             </h2>
             <Link to="/travel" className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">
@@ -566,14 +566,14 @@ export default function Dashboard() {
                     <Plane size={14} className="text-sky-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-ink truncate leading-tight">{tr.destination}</p>
+                    <p className="text-sm font-semibold text-ink truncate leading-tight">{tr.destination}</p>
                     <p className="text-[11px] text-ink-3 mt-0.5 truncate">
                       {tr.employee?.full_name ?? 'You'} · {date(tr.departure_date)}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0 flex items-center gap-2">
                     <div>
-                      <p className="text-[13px] font-bold text-ink tabular-nums">EST {currency(tr.estimated_budget)}</p>
+                      <p className="text-sm font-bold text-ink tabular-nums">EST {currency(tr.estimated_budget)}</p>
                       <div className="mt-0.5 flex justify-end">
                         <StatusBadge status={tr.status} />
                       </div>
@@ -590,17 +590,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Floating FAB (employee only) ── */}
-      {user.role === 'employee' && (
-        <Link
-          to="/expenses/new"
-          className="fixed bottom-8 right-8 flex items-center gap-2 px-5 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:scale-105 shadow-lg"
-          style={{ background: 'linear-gradient(135deg, #4F46E5, #4338CA)' }}
-        >
-          <Plus size={18} />
-          New Report
-        </Link>
-      )}
     </div>
   )
 }

@@ -18,9 +18,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: 'bg-ink-3/10 text-ink-3',
 }
 
-const TAB_MAP: Record<string, string> = {
+const TAB_MAP: Record<string, string | string[]> = {
   all: '',
-  'In Review': 'under_review',
+  'In Review': ['submitted', 'under_review'],
   Approved: 'approved',
   Reimbursed: 'paid',
   Drafts: 'draft',
@@ -123,7 +123,10 @@ export default function ExpenseList() {
   const reports = useMemo(() => {
     let list = all
     const statusVal = TAB_MAP[activeTab]
-    if (statusVal) list = list.filter((r) => r.status === statusVal)
+    if (statusVal) {
+      const statuses = Array.isArray(statusVal) ? statusVal : [statusVal]
+      list = list.filter((r) => statuses.includes(r.status))
+    }
     list = filterByTime(list, timeFilter)
     if (categoryFilter !== 'all') list = list.filter((r) => r.items?.some((i) => i.category === categoryFilter))
     if (searchQuery.trim()) {
@@ -160,7 +163,7 @@ export default function ExpenseList() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-ink tracking-tight">Expense Reports</h1>
-          <p className="text-[13px] text-ink-3 mt-0.5">Real-time monitoring of organizational spend and approvals.</p>
+          <p className="text-sm text-ink-3 mt-0.5">Real-time monitoring of organizational spend and approvals.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -182,21 +185,30 @@ export default function ExpenseList() {
           <p className="text-2xl font-bold text-brand-600 tabular-nums">{currency(totalSpend)}</p>
           <p className="text-xs text-ink-3 mt-1">{all.length} total reports</p>
         </div>
-        <div className="card p-5">
+        <button
+          onClick={() => setActiveTab(activeTab === 'In Review' ? 'all' : 'In Review')}
+          className={`card p-5 text-left transition-all hover:border-amber-400/40 hover:shadow-md ${activeTab === 'In Review' ? 'ring-2 ring-amber-400/40 border-amber-400/30' : ''}`}
+        >
           <p className="text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1">Pending Approval</p>
           <p className="text-2xl font-bold text-amber-400 tabular-nums">{String(pendingCount).padStart(2, '0')}</p>
-          <p className="text-xs text-ink-3 mt-1">Awaiting review</p>
-        </div>
-        <div className="card p-5">
+          <p className="text-xs text-ink-3 mt-1">{activeTab === 'In Review' ? 'Click to clear filter' : 'Click to filter'}</p>
+        </button>
+        <button
+          onClick={() => setActiveTab(activeTab === 'Approved' ? 'all' : 'Approved')}
+          className={`card p-5 text-left transition-all hover:border-emerald-400/40 hover:shadow-md ${activeTab === 'Approved' ? 'ring-2 ring-emerald-400/40 border-emerald-400/30' : ''}`}
+        >
           <p className="text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1">Approved</p>
           <p className="text-2xl font-bold text-emerald-400 tabular-nums">{currency(approvedSpend)}</p>
-          <p className="text-xs text-ink-3 mt-1">{all.filter((r) => r.status === 'approved').length} reports</p>
-        </div>
-        <div className="card p-5">
+          <p className="text-xs text-ink-3 mt-1">{activeTab === 'Approved' ? 'Click to clear filter' : `${all.filter((r) => r.status === 'approved').length} reports`}</p>
+        </button>
+        <button
+          onClick={() => setActiveTab(activeTab === 'Rejected' ? 'all' : 'Rejected')}
+          className={`card p-5 text-left transition-all hover:border-red-400/40 hover:shadow-md ${activeTab === 'Rejected' ? 'ring-2 ring-red-400/40 border-red-400/30' : ''}`}
+        >
           <p className="text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1">Flagged Policy</p>
           <p className="text-2xl font-bold text-red-400 tabular-nums">{String(violationsCount).padStart(2, '0')}</p>
-          <p className="text-xs text-ink-3 mt-1">Policy breaches</p>
-        </div>
+          <p className="text-xs text-ink-3 mt-1">{activeTab === 'Rejected' ? 'Click to clear filter' : 'Policy breaches'}</p>
+        </button>
       </div>
 
       {/* Search */}

@@ -46,7 +46,7 @@ export interface TravelRequest {
   departure_date: string
   return_date: string
   estimated_budget: number
-  status: 'draft' | 'submitted' | 'approved' | 'rejected'
+  status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected'
   reviewed_by?: string
   review_note?: string
   submitted_at?: string

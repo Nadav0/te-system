@@ -325,7 +325,7 @@ export default function ReportsPage() {
  return (
  <div className="p-8 max-w-2xl print:hidden">
  <StepIndicator current={1} />
- <h1 className="text-2xl font-bold text-ink mb-1">Export Report</h1>
+ <h1 className="text-2xl font-semibold text-ink mb-1">Export Report</h1>
  <p className="text-sm text-ink-3 mb-6">Configure your report filters, then preview and download.</p>
 
  <div className="bg-surface-1 rounded-xl border border-edge p-6 space-y-6">
@@ -420,7 +420,7 @@ export default function ReportsPage() {
  return (
  <div className="p-8 max-w-5xl print:hidden">
  <StepIndicator current={2} />
- <h1 className="text-2xl font-bold text-ink mb-1">Preview</h1>
+ <h1 className="text-2xl font-semibold text-ink mb-1">Preview</h1>
  <p className="text-sm text-ink-3 mb-6">Review the records that match your filters.</p>
 
  {isLoading ? (
@@ -555,7 +555,7 @@ export default function ReportsPage() {
  <>
  <div className="p-8 max-w-2xl print:hidden">
  <StepIndicator current={3} />
- <h1 className="text-2xl font-bold text-ink mb-1">Export</h1>
+ <h1 className="text-2xl font-semibold text-ink mb-1">Export</h1>
  <p className="text-sm text-ink-3 mb-6">
  Choose your export format — {totalResults} record{totalResults !== 1 ? 's' : ''} ready.
  </p>

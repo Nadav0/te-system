@@ -86,7 +86,7 @@ export default function ExecutiveDashboard() {
  <h1 className="text-xl font-semibold text-ink tracking-tight">
  Executive Dashboard
  </h1>
- <p className="text-[13px] text-ink-3 mt-1">
+ <p className="text-sm text-ink-3 mt-1">
  Real-time enterprise expense overview and budget tracking.
  </p>
  </div>
@@ -195,7 +195,7 @@ export default function ExecutiveDashboard() {
    <>
     <div className="fixed inset-0 z-10" onClick={() => setDeptMenuOpen(false)} />
     <div className="absolute right-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-20 py-1 min-w-[160px]">
-     <p className="px-3 py-1.5 text-[10px] text-ink-3 uppercase tracking-widest font-semibold">Show</p>
+     <p className="px-3 py-1.5 text-xs text-ink-3 uppercase tracking-wider font-semibold">Show</p>
      {[4, 6, 8].map((n) => (
       <button
        key={n}

@@ -57,6 +57,57 @@
   }
 }
 
+/* ── Gradient Motivation — submit button glow when form is complete ─────────── */
+@keyframes motivation-glow {
+  0%, 100% { box-shadow: 0 0 0 0px rgba(92, 102, 245, 0); }
+  50%       { box-shadow: 0 0 0 5px rgba(92, 102, 245, 0.22), 0 0 18px rgba(92, 102, 245, 0.12); }
+}
+.motivation-ready {
+  animation: motivation-glow 2s ease-in-out infinite;
+}
+
+@keyframes approve-glow {
+  0%, 100% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0); }
+  50%       { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.22), 0 0 18px rgba(16, 185, 129, 0.12); }
+}
+.approve-ready {
+  animation: approve-glow 2s ease-in-out infinite;
+}
+
+/* ── MotivationBar animations ────────────────────────────────────────────── */
+@keyframes bar-shimmer {
+  0%   { transform: translateX(-200%) skewX(-20deg); }
+  100% { transform: translateX(600%)  skewX(-20deg); }
+}
+.bar-shimmer {
+  animation: bar-shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes bar-complete-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50%       { box-shadow: 0 0 12px 4px rgba(16, 185, 129, 0.28), 0 0 24px 8px rgba(16, 185, 129, 0.1); }
+}
+.bar-complete-glow {
+  animation: bar-complete-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: translateY(-50%) translateX(-50%) scale(1);   opacity: 1; }
+  50%       { transform: translateY(-50%) translateX(-50%) scale(1.4); opacity: 0.8; }
+}
+.dot-pulse {
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes badge-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  70%  { transform: scale(1.1); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.badge-pop {
+  animation: badge-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
 @layer components {
   /* ── Buttons ─────────────────────────────────────────────── */
   .btn {

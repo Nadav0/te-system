@@ -357,7 +357,7 @@ function Header() {
  <div className="w-6 h-6 rounded-full bg-brand-600 flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0">
  {switching ? '…' : initials}
  </div>
- <span className="text-[13px] font-medium text-ink">{user?.full_name?.split(' ')[0] ?? 'User'}</span>
+ <span className="text-sm font-medium text-ink">{user?.full_name?.split(' ')[0] ?? 'User'}</span>
  <ChevronDown size={12} className="text-ink-3" />
  </button>
 
@@ -365,7 +365,7 @@ function Header() {
  <>
  <div className="fixed inset-0 z-10" onClick={() => setRoleOpen(false)} />
  <div className="absolute right-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-20 min-w-[180px] py-1">
- <p className="px-3 py-1.5 text-[10px] text-ink-3 uppercase tracking-widest font-semibold">Switch Role</p>
+ <p className="px-3 py-1.5 text-xs text-ink-3 uppercase tracking-wider font-semibold">Switch Role</p>
  {ROLE_OPTIONS.map((opt) => (
  <button
  key={opt.key}

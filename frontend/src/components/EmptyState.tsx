@@ -100,9 +100,9 @@ export default function EmptyState({ variant = 'generic', title, description, ac
         <div className="absolute inset-0 rounded-full border border-brand-600/10" />
       </div>
 
-      <p className="text-[15px] font-semibold text-ink mb-1.5">{title}</p>
+      <p className="text-base font-semibold text-ink mb-1.5">{title}</p>
       {description && (
-        <p className="text-[13px] text-ink-3 max-w-xs mb-6">{description}</p>
+        <p className="text-sm text-ink-3 max-w-xs mb-6">{description}</p>
       )}
       {action && <div>{action}</div>}
     </div>

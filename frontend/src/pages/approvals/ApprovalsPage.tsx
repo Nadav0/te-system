@@ -10,6 +10,7 @@ import { currency, date } from '../../utils/format'
 import StatusBadge from '../../components/StatusBadge'
 import EmptyState from '../../components/EmptyState'
 import Spinner from '../../components/Spinner'
+import MotivationBar from '../../components/MotivationBar'
 import type { ExpenseReport, TravelRequest } from '../../types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -134,9 +135,16 @@ function TravelRow({
 
 // ── Expense Detail ─────────────────────────────────────────────────────────────
 
-function ExpenseDetail({ id }: { id: string }) {
+function ExpenseDetail({ id, position, total, onReviewed }: {
+  id: string
+  position: number
+  total: number
+  onReviewed?: () => void
+}) {
   const qc = useQueryClient()
   const [reviewNote, setReviewNote] = useState('')
+  const [showNote, setShowNote] = useState(false)
+  const [lastAction, setLastAction] = useState<'approve' | 'reject' | 'changes' | null>(null)
 
   const { data: report, isLoading } = useQuery<ExpenseReport>({
     queryKey: ['expense', id],
@@ -146,10 +154,15 @@ function ExpenseDetail({ id }: { id: string }) {
   const reviewMutation = useMutation({
     mutationFn: ({ action, prefix = '' }: { action: 'approve' | 'reject'; prefix?: string }) =>
       reviewExpense(id, action, prefix + (reviewNote || '') || undefined),
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
+      const act = vars.action === 'approve' ? 'approve' : vars.prefix ? 'changes' : 'reject'
+      setLastAction(act)
+      setTimeout(() => setLastAction(null), 1500)
       qc.invalidateQueries({ queryKey: ['expenses'] })
       qc.invalidateQueries({ queryKey: ['expense', id] })
       setReviewNote('')
+      setShowNote(false)
+      onReviewed?.()
     },
   })
 
@@ -363,40 +376,95 @@ function ExpenseDetail({ id }: { id: string }) {
 
       {/* Sticky action bar */}
       {canReview && (
-        <div className="border-t border-edge bg-surface-1/80 backdrop-blur-sm p-5 flex-shrink-0">
-          <textarea
-            rows={2}
-            value={reviewNote}
-            onChange={(e) => setReviewNote(e.target.value)}
-            placeholder="Add a note (optional)…"
-            className="w-full mb-3 bg-surface-0 border border-edge rounded-lg px-3 py-2 text-sm text-ink placeholder-ink-3 focus:outline-none focus:border-brand-600 resize-none"
-          />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => reviewMutation.mutate({ action: 'reject' })}
-                disabled={reviewMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2 text-red-400 border border-red-400/30 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-semibold disabled:opacity-40"
-              >
-                <XCircle size={15} /> Reject
-              </button>
-              <button
-                onClick={() => reviewMutation.mutate({ action: 'reject', prefix: '[Changes Requested] ' })}
-                disabled={reviewMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2 text-ink-3 border border-edge rounded-lg hover:bg-surface-hover transition-colors text-sm font-semibold disabled:opacity-40"
-              >
-                <RotateCcw size={15} /> Request Changes
-              </button>
+        <div className="border-t border-edge bg-surface-1/80 backdrop-blur-sm flex-shrink-0">
+          {lastAction ? (
+            /* Post-action flash */
+            <div className={`flex items-center justify-center gap-2 py-5 text-sm font-semibold transition-all ${
+              lastAction === 'approve' ? 'text-emerald-500' :
+              lastAction === 'reject'  ? 'text-red-400' : 'text-ink-3'
+            }`}>
+              {lastAction === 'approve' && <><CheckCircle size={16} /> Approved</>}
+              {lastAction === 'reject'  && <><XCircle size={16} /> Rejected</>}
+              {lastAction === 'changes' && <><RotateCcw size={16} /> Changes Requested</>}
             </div>
-            <button
-              onClick={() => reviewMutation.mutate({ action: 'approve' })}
-              disabled={reviewMutation.isPending}
-              className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-semibold disabled:opacity-40"
-            >
-              <CheckCircle size={15} />
-              {reviewMutation.isPending ? 'Saving…' : 'Approve Expense'}
-            </button>
-          </div>
+          ) : (
+            <>
+              {/* Context bar */}
+              <div className="px-5 py-2.5 border-b border-edge flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-semibold text-ink-3">
+                    Reviewing {position} of {total}
+                  </span>
+                  {violatingItems.length > 0 && (
+                    <span className="flex items-center gap-1 text-[11px] text-amber-500 font-semibold">
+                      <AlertTriangle size={10} /> {violatingItems.length} violation{violatingItems.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                {!showNote ? (
+                  <button
+                    onClick={() => setShowNote(true)}
+                    className="text-[11px] text-brand-500 hover:text-brand-600 transition-colors font-medium"
+                  >
+                    + Add note
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setShowNote(false); setReviewNote('') }}
+                    className="text-[11px] text-ink-3 hover:text-ink transition-colors"
+                  >
+                    Remove note
+                  </button>
+                )}
+              </div>
+
+              {/* Expandable note */}
+              {showNote && (
+                <div className="px-5 pt-3">
+                  <textarea
+                    rows={2}
+                    value={reviewNote}
+                    onChange={(e) => setReviewNote(e.target.value)}
+                    placeholder="Note to the employee (optional)…"
+                    autoFocus
+                    className="w-full bg-surface-0 border border-edge rounded-lg px-3 py-2 text-sm text-ink placeholder-ink-3 focus:outline-none focus:border-brand-600 resize-none"
+                  />
+                </div>
+              )}
+
+              {/* Buttons */}
+              <div className="px-5 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => reviewMutation.mutate({ action: 'reject' })}
+                    disabled={reviewMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-2 text-red-400 border border-red-400/30 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-semibold disabled:opacity-40"
+                  >
+                    <XCircle size={14} /> Reject
+                  </button>
+                  <button
+                    onClick={() => reviewMutation.mutate({ action: 'reject', prefix: '[Changes Requested] ' })}
+                    disabled={reviewMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-2 text-ink-3 border border-edge rounded-lg hover:bg-surface-hover transition-colors text-sm font-semibold disabled:opacity-40"
+                  >
+                    <RotateCcw size={14} /> Request Changes
+                  </button>
+                </div>
+                <button
+                  onClick={() => reviewMutation.mutate({ action: 'approve' })}
+                  disabled={reviewMutation.isPending}
+                  className={`flex items-center gap-2 px-6 py-2.5 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${
+                    violatingItems.length > 0
+                      ? 'bg-brand-600 hover:bg-brand-700'
+                      : 'bg-emerald-600 hover:bg-emerald-700 approve-ready'
+                  }`}
+                >
+                  <CheckCircle size={15} />
+                  {reviewMutation.isPending ? 'Saving…' : violatingItems.length > 0 ? 'Approve Anyway' : 'Approve'}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -405,9 +473,16 @@ function ExpenseDetail({ id }: { id: string }) {
 
 // ── Travel Detail ──────────────────────────────────────────────────────────────
 
-function TravelDetail({ id }: { id: string }) {
+function TravelDetail({ id, position, total, onReviewed }: {
+  id: string
+  position: number
+  total: number
+  onReviewed?: () => void
+}) {
   const qc = useQueryClient()
   const [reviewNote, setReviewNote] = useState('')
+  const [showNote, setShowNote] = useState(false)
+  const [lastAction, setLastAction] = useState<'approve' | 'reject' | null>(null)
 
   const { data: tr, isLoading } = useQuery<TravelRequest>({
     queryKey: ['travel', id],
@@ -417,10 +492,14 @@ function TravelDetail({ id }: { id: string }) {
   const reviewMutation = useMutation({
     mutationFn: ({ action, prefix = '' }: { action: 'approve' | 'reject'; prefix?: string }) =>
       reviewTravel(id, action, prefix + (reviewNote || '') || undefined),
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
+      setLastAction(vars.action)
+      setTimeout(() => setLastAction(null), 1500)
       qc.invalidateQueries({ queryKey: ['travel'] })
       qc.invalidateQueries({ queryKey: ['travel', id] })
       setReviewNote('')
+      setShowNote(false)
+      onReviewed?.()
     },
   })
 
@@ -521,38 +600,77 @@ function TravelDetail({ id }: { id: string }) {
 
       {/* Sticky action bar */}
       {canReview && (
-        <div className="border-t border-edge bg-surface-1/80 backdrop-blur-sm p-5 flex-shrink-0">
-          <textarea
-            rows={2}
-            value={reviewNote}
-            onChange={(e) => setReviewNote(e.target.value)}
-            placeholder="Add a note (optional)…"
-            className="w-full mb-3 bg-surface-0 border border-edge rounded-lg px-3 py-2 text-sm text-ink placeholder-ink-3 focus:outline-none focus:border-brand-600 resize-none"
-          />
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => reviewMutation.mutate({ action: 'reject' })}
-              disabled={reviewMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2 text-red-400 border border-red-400/30 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-semibold disabled:opacity-40"
-            >
-              <XCircle size={15} /> Reject Request
-            </button>
-            <button
-              onClick={() => reviewMutation.mutate({ action: 'approve' })}
-              disabled={reviewMutation.isPending}
-              className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-semibold disabled:opacity-40"
-            >
-              <CheckCircle size={15} />
-              {reviewMutation.isPending ? 'Saving…' : 'Approve Travel'}
-            </button>
-          </div>
+        <div className="border-t border-edge bg-surface-1/80 backdrop-blur-sm flex-shrink-0">
+          {lastAction ? (
+            <div className={`flex items-center justify-center gap-2 py-5 text-sm font-semibold ${
+              lastAction === 'approve' ? 'text-emerald-500' : 'text-red-400'
+            }`}>
+              {lastAction === 'approve'
+                ? <><CheckCircle size={16} /> Approved</>
+                : <><XCircle size={16} /> Rejected</>}
+            </div>
+          ) : (
+            <>
+              <div className="px-5 py-2.5 border-b border-edge flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-ink-3">
+                  Reviewing {position} of {total}
+                </span>
+                {!showNote ? (
+                  <button
+                    onClick={() => setShowNote(true)}
+                    className="text-[11px] text-brand-500 hover:text-brand-600 transition-colors font-medium"
+                  >
+                    + Add note
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setShowNote(false); setReviewNote('') }}
+                    className="text-[11px] text-ink-3 hover:text-ink transition-colors"
+                  >
+                    Remove note
+                  </button>
+                )}
+              </div>
+
+              {showNote && (
+                <div className="px-5 pt-3">
+                  <textarea
+                    rows={2}
+                    value={reviewNote}
+                    onChange={(e) => setReviewNote(e.target.value)}
+                    placeholder="Note to the employee (optional)…"
+                    autoFocus
+                    className="w-full bg-surface-0 border border-edge rounded-lg px-3 py-2 text-sm text-ink placeholder-ink-3 focus:outline-none focus:border-brand-600 resize-none"
+                  />
+                </div>
+              )}
+
+              <div className="px-5 py-4 flex items-center justify-between">
+                <button
+                  onClick={() => reviewMutation.mutate({ action: 'reject' })}
+                  disabled={reviewMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-2 text-red-400 border border-red-400/30 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-semibold disabled:opacity-40"
+                >
+                  <XCircle size={14} /> Reject
+                </button>
+                <button
+                  onClick={() => reviewMutation.mutate({ action: 'approve' })}
+                  disabled={reviewMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 approve-ready text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-40"
+                >
+                  <CheckCircle size={15} />
+                  {reviewMutation.isPending ? 'Saving…' : 'Approve'}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
   )
 }
 
-// ── Empty state ────────────────────────────────────────────────────────────────
+// ── Empty / celebration states ────────────────────────────────────────────────
 
 function EmptyDetail({ message }: { message: string }) {
   return (
@@ -566,13 +684,40 @@ function EmptyDetail({ message }: { message: string }) {
   )
 }
 
+function QueueCelebration({ reviewed, tab }: { reviewed: number; tab: string }) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
+      <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-5">
+        <CheckCircle size={30} className="text-emerald-500" />
+      </div>
+      <h3 className="text-xl font-bold text-ink mb-2">Queue cleared!</h3>
+      <p className="text-sm text-ink-3 mb-8">
+        You reviewed {reviewed} {tab} request{reviewed !== 1 ? 's' : ''} this session.
+      </p>
+      <MotivationBar progress={1} message="All caught up — great work!" className="w-56" />
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 type Tab = 'expenses' | 'travel'
 
+function queueMotivationMsg(reviewed: number, pending: number): string {
+  const total = reviewed + pending
+  if (total === 0) return 'Nothing pending — inbox clear'
+  if (reviewed === 0) return `${total} item${total === 1 ? '' : 's'} need your review`
+  if (pending === 0) return 'Queue cleared — great work!'
+  if (reviewed / total < 0.5) return `${pending} remaining — keep going!`
+  if (reviewed / total < 0.75) return 'More than halfway there!'
+  return `Almost done — just ${pending} more!`
+}
+
 export default function ApprovalsPage() {
   const [tab, setTab] = useState<Tab>('expenses')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [sessionExpReviewed, setSessionExpReviewed] = useState(0)
+  const [sessionTrvReviewed, setSessionTrvReviewed] = useState(0)
 
   const { data: expenses = [], isLoading: el } = useQuery({
     queryKey: ['expenses'],
@@ -591,6 +736,11 @@ export default function ApprovalsPage() {
   )
 
   const activeList = tab === 'expenses' ? pendingExpenses : pendingTravel
+
+  const tabReviewed = tab === 'expenses' ? sessionExpReviewed : sessionTrvReviewed
+  const tabPending  = activeList.length
+  const totalSeen   = tabReviewed + tabPending
+  const queueProgress = totalSeen > 0 ? tabReviewed / totalSeen : 0
 
   // Auto-select first item when list loads or tab switches
   useEffect(() => {
@@ -636,10 +786,11 @@ export default function ApprovalsPage() {
               )}
             </button>
           </div>
-          <div className="flex items-center justify-between mt-2 px-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">
-              Needs review — {activeList.length} pending
-            </span>
+          <div className="mt-3 px-1">
+            <MotivationBar
+              progress={queueProgress}
+              message={queueMotivationMsg(tabReviewed, tabPending)}
+            />
           </div>
         </div>
 
@@ -678,9 +829,23 @@ export default function ApprovalsPage() {
       {/* ── Right: Detail panel ── */}
       <div className="flex-1 bg-surface-1 overflow-hidden flex flex-col">
         {selectedId && tab === 'expenses' ? (
-          <ExpenseDetail key={selectedId} id={selectedId} />
+          <ExpenseDetail
+            key={selectedId}
+            id={selectedId}
+            position={sessionExpReviewed + pendingExpenses.findIndex((e) => e.id === selectedId) + 1}
+            total={totalSeen}
+            onReviewed={() => setSessionExpReviewed((n) => n + 1)}
+          />
         ) : selectedId && tab === 'travel' ? (
-          <TravelDetail key={selectedId} id={selectedId} />
+          <TravelDetail
+            key={selectedId}
+            id={selectedId}
+            position={sessionTrvReviewed + pendingTravel.findIndex((t) => t.id === selectedId) + 1}
+            total={totalSeen}
+            onReviewed={() => setSessionTrvReviewed((n) => n + 1)}
+          />
+        ) : tabReviewed > 0 ? (
+          <QueueCelebration reviewed={tabReviewed} tab={tab === 'expenses' ? 'expense' : 'travel'} />
         ) : (
           <EmptyDetail
             message={tab === 'expenses' ? 'No expense reports pending' : 'No travel requests pending'}

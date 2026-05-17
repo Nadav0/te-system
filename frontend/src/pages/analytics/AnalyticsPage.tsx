@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
         <div className="card">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-[15px] font-semibold text-ink">Monthly Spend Trend</h3>
+              <h3 className="text-base font-semibold text-ink">Monthly Spend Trend</h3>
               <p className="text-[11px] text-ink-3 mt-0.5">Total expense volume per month</p>
             </div>
             <PeriodToggle value={period} onChange={setPeriod} />
@@ -261,7 +261,7 @@ export default function AnalyticsPage() {
 
         {/* By category — donut */}
         <div className="card">
-          <h3 className="text-[15px] font-semibold text-ink mb-5">Spend by Category</h3>
+          <h3 className="text-base font-semibold text-ink mb-5">Spend by Category</h3>
           {categoryData.length === 0 ? (
             <p className="text-ink-3 text-sm text-center py-12">No data yet</p>
           ) : (
@@ -311,7 +311,7 @@ export default function AnalyticsPage() {
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         {/* By department — horizontal bar */}
         <div className="card">
-          <h3 className="text-[15px] font-semibold text-ink mb-5">Spend by Department</h3>
+          <h3 className="text-base font-semibold text-ink mb-5">Spend by Department</h3>
           {byDept.length === 0 ? (
             <p className="text-ink-3 text-sm text-center py-12">No data yet</p>
           ) : (
@@ -339,7 +339,7 @@ export default function AnalyticsPage() {
 
         {/* Policy violations — vertical bar */}
         <div className="card">
-          <h3 className="text-[15px] font-semibold text-ink mb-5">Policy Violations by Category</h3>
+          <h3 className="text-base font-semibold text-ink mb-5">Policy Violations by Category</h3>
           {violations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3">
@@ -347,7 +347,7 @@ export default function AnalyticsPage() {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
-              <p className="text-[13px] font-semibold text-emerald-600">No violations detected</p>
+              <p className="text-sm font-semibold text-emerald-600">No violations detected</p>
               <p className="text-[11px] text-ink-3 mt-1">Spend looks clean</p>
             </div>
           ) : (
@@ -372,7 +372,7 @@ export default function AnalyticsPage() {
               <Zap size={16} className="text-red-400" />
             </div>
             <div>
-              <h3 className="text-[15px] font-semibold text-ink">Risk Anomalies</h3>
+              <h3 className="text-base font-semibold text-ink">Risk Anomalies</h3>
               <p className="text-[11px] text-ink-3">AI-detected policy and spend irregularities</p>
             </div>
           </div>
@@ -422,7 +422,7 @@ export default function AnalyticsPage() {
 
       {/* Top spenders table */}
       <div className="card">
-        <h3 className="text-[15px] font-semibold text-ink mb-4">Top Spenders</h3>
+        <h3 className="text-base font-semibold text-ink mb-4">Top Spenders</h3>
         {byEmployee.length === 0 ? (
           <p className="text-ink-3 text-sm text-center py-8">No data yet</p>
         ) : (

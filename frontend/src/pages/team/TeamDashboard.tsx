@@ -129,7 +129,7 @@ export default function TeamDashboard() {
  <div className="flex items-start justify-between mb-8">
  <div>
  <h1 className="text-xl font-semibold text-ink tracking-tight">Team Dashboard</h1>
- <p className="text-[13px] text-ink-3 mt-1">
+ <p className="text-sm text-ink-3 mt-1">
  Monitoring expenditure and team compliance for {fiscalLabel}.
  </p>
  </div>

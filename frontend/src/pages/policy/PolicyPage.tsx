@@ -305,7 +305,7 @@ export default function PolicyPage() {
           <div className="space-y-4">
             {/* Policy Name */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-1">
+              <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1">
                 Policy Name
               </label>
               <input
@@ -318,7 +318,7 @@ export default function PolicyPage() {
 
             {/* Category */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-1">
+              <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1">
                 Category
               </label>
               <select
@@ -334,7 +334,7 @@ export default function PolicyPage() {
 
             {/* Threshold */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-1">
+              <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1">
                 Threshold Conditions
               </label>
               <div className="relative">
@@ -352,7 +352,7 @@ export default function PolicyPage() {
 
             {/* Automated Action */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-2">
+              <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-2">
                 Automated Action
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -381,7 +381,7 @@ export default function PolicyPage() {
 
             {/* Conditions Builder */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-2">
+              <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-2">
                 Conditions Builder
               </label>
               <div className="space-y-2">
@@ -416,7 +416,7 @@ export default function PolicyPage() {
 
             {/* Recipients */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-2">
+              <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-2">
                 Recipients & Applicability
               </label>
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -440,7 +440,7 @@ export default function PolicyPage() {
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setTargetPickerOpen(false)} />
                       <div className="absolute left-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-20 py-1 min-w-[180px]">
-                        <p className="px-3 py-1.5 text-[10px] text-ink-3 uppercase tracking-widest font-semibold">Add approver</p>
+                        <p className="px-3 py-1.5 text-xs text-ink-3 uppercase tracking-wider font-semibold">Add approver</p>
                         {(allUsers as any[]).slice(0, 6).map((u: any) => {
                           const ini = u.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() ?? '?'
                           const already = editTargets.includes(ini)

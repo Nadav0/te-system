@@ -1,10 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle, FileText, ScanLine, ChevronRight, Clock, CheckCheck, Search } from 'lucide-react'
+import { CheckCircle, FileText, ScanLine, ChevronRight, Clock, Search } from 'lucide-react'
 import { listExpenses } from '../../api/expenses'
 import { currency, date } from '../../utils/format'
 import Spinner from '../../components/Spinner'
+import MotivationBar from '../../components/MotivationBar'
+import Select from '../../components/Select'
 import type { ExpenseReport, ExpenseItem } from '../../types'
+
+function codingMsg(coded: number, pending: number): string {
+  const total = coded + pending
+  if (total === 0) return 'No transactions pending'
+  if (coded === 0) return `${pending} transaction${pending !== 1 ? 's' : ''} need GL codes`
+  if (pending === 0) return 'Queue complete — great work!'
+  if (coded / total < 0.5) return `${pending} remaining — keep going!`
+  if (coded / total < 0.75) return 'More than halfway there!'
+  return `Almost done — just ${pending} more!`
+}
 
 const GL_SUGGESTIONS: Record<string, string> = {
   meals: '6200 – Meals & Entertainment',
@@ -83,13 +95,12 @@ export default function CodingQueuePage() {
   const submitCoding = async () => {
     if (!selected) return
     setSubmitting(true)
-    // Simulate a brief async submission (replace with real API call when endpoint is available)
     await new Promise((r) => setTimeout(r, 400))
     const id = selected.item.id
     setCoded((prev) => new Set([...prev, id]))
     setLastSubmitted(id)
     setSubmitting(false)
-    setTimeout(() => setLastSubmitted(null), 2000)
+    setTimeout(() => setLastSubmitted(null), 1500)
   }
 
   const getGL = (item: ExpenseItem) =>
@@ -122,12 +133,14 @@ export default function CodingQueuePage() {
         <div className="px-4 py-4 border-b border-edge">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-bold text-ink">Coding Queue</h2>
-            <span className="text-[10px] font-bold bg-amber-400/10 text-amber-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
-              {uncoded} pending
-            </span>
           </div>
-          <p className="text-xs text-ink-3">Assign GL codes to approved transactions.</p>
-          <div className="relative mt-2">
+          <p className="text-xs text-ink-3 mb-3">Assign GL codes to approved transactions.</p>
+          <MotivationBar
+            progress={coded.size + queue.length > 0 ? coded.size / (coded.size + queue.length) : 0}
+            message={codingMsg(coded.size, queue.length)}
+            className="mb-3"
+          />
+          <div className="relative">
             <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" />
             <input
               type="text"
@@ -182,19 +195,19 @@ export default function CodingQueuePage() {
           <div className="px-6 py-5 border-b border-edge flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold text-ink-3 uppercase tracking-widest">
+                <span className="text-xs font-semibold text-ink-3 uppercase tracking-wider">
                   TX {selected.item.id.slice(0, 8).toUpperCase()}
                 </span>
                 <span className="text-[10px] text-ink-3">·</span>
                 <span className="text-[10px] text-ink-3">{selected.report.employee?.full_name ?? 'Unknown'}</span>
               </div>
-              <h3 className="text-xl font-black text-ink">
+              <h3 className="text-xl font-bold text-ink">
                 {selected.item.description || selected.report.title}
               </h3>
               <p className="text-sm text-ink-3 mt-0.5">{date(selected.item.date)} · {getCard(selected.item.id)}</p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-black text-ink tabular-nums">{currency(selected.item.amount)}</p>
+              <p className="text-3xl font-bold text-ink tabular-nums">{currency(selected.item.amount)}</p>
               <span className="text-xs font-semibold capitalize text-ink-3">{selected.item.category}</span>
             </div>
           </div>
@@ -206,7 +219,7 @@ export default function CodingQueuePage() {
               <div className="space-y-5">
                 {/* GL Account */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1.5">
                     GL Account
                   </label>
                   <input
@@ -230,30 +243,26 @@ export default function CodingQueuePage() {
 
                 {/* Department */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1.5">
                     Department
                   </label>
-                  <select
+                  <Select
+                    options={DEPARTMENTS.map((d) => ({ value: d, label: d }))}
                     value={getDept(selected.item, selected.report)}
-                    onChange={(e) => setDept(selected.item.id, e.target.value)}
-                    className="w-full px-3 py-2.5 border border-edge rounded-lg text-sm bg-surface-0 text-ink focus:outline-none focus:border-brand-600 transition-colors"
-                  >
-                    {DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}
-                  </select>
+                    onChange={(v) => setDept(selected.item.id, v)}
+                  />
                 </div>
 
                 {/* Location */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-1.5">
                     Location
                   </label>
-                  <select
+                  <Select
+                    options={LOCATIONS.map((l) => ({ value: l, label: l }))}
                     value={getLoc(selected.item)}
-                    onChange={(e) => setLoc(selected.item.id, e.target.value)}
-                    className="w-full px-3 py-2.5 border border-edge rounded-lg text-sm bg-surface-0 text-ink focus:outline-none focus:border-brand-600 transition-colors"
-                  >
-                    {LOCATIONS.map((l) => <option key={l}>{l}</option>)}
-                  </select>
+                    onChange={(v) => setLoc(selected.item.id, v)}
+                  />
                 </div>
 
               </div>
@@ -263,7 +272,7 @@ export default function CodingQueuePage() {
                 {/* Receipt */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[10px] font-semibold text-ink-3 uppercase tracking-widest">Receipt Preview</label>
+                    <label className="text-xs font-semibold text-ink-3 uppercase tracking-wider">Receipt Preview</label>
                   </div>
                   <div className="h-44 bg-surface-0 border border-edge rounded-lg flex flex-col items-center justify-center gap-2 text-ink-3">
                     {selected.item.receipt_url ? (
@@ -280,7 +289,7 @@ export default function CodingQueuePage() {
 
                 {/* Audit trail */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-widest mb-2">
+                  <label className="block text-xs font-semibold text-ink-3 uppercase tracking-wider mb-2">
                     Audit Trail
                   </label>
                   <div className="space-y-2">
@@ -306,41 +315,58 @@ export default function CodingQueuePage() {
           </div>
 
           {/* Sticky action bar */}
-          <div className="flex-shrink-0 border-t border-edge px-6 py-4 bg-surface-1 flex items-center justify-between gap-4">
-            <div className="text-xs text-ink-3">
-              Item <strong className="text-ink">{selectedIdx + 1}</strong> of <strong className="text-ink">{queue.length}</strong> in queue
-            </div>
-            <div className="flex items-center gap-2">
-              {selectedIdx < queue.length - 1 && (
-                <button
-                  onClick={() => setSelectedIdx((i) => i + 1)}
-                  className="flex items-center gap-1.5 px-4 py-2 border border-edge rounded-lg text-sm font-medium text-ink-2 hover:bg-surface-hover transition-colors"
-                >
-                  Skip <ChevronRight size={14} />
-                </button>
-              )}
-              <button
-                onClick={submitCoding}
-                disabled={submitting}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #4F46E5, #4338CA)' }}
-              >
-                {submitting ? (
-                  <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Submitting…</>
-                ) : lastSubmitted ? (
-                  <><CheckCheck size={14} /> Submitted!</>
-                ) : (
-                  <><CheckCircle size={14} /> Submit Coding</>
-                )}
-              </button>
-            </div>
+          <div className="flex-shrink-0 border-t border-edge bg-surface-1/80 backdrop-blur-sm">
+            {lastSubmitted ? (
+              /* Post-action flash */
+              <div className="flex items-center justify-center gap-2 py-4 text-sm font-semibold text-emerald-500">
+                <CheckCircle size={16} /> Coded!
+              </div>
+            ) : (
+              <div className="px-6 py-4 flex items-center justify-between gap-4">
+                <div className="text-xs text-ink-3">
+                  Item <strong className="text-ink">{coded.size + selectedIdx + 1}</strong> of{' '}
+                  <strong className="text-ink">{coded.size + queue.length}</strong> in queue
+                </div>
+                <div className="flex items-center gap-2">
+                  {selectedIdx < queue.length - 1 && (
+                    <button
+                      onClick={() => setSelectedIdx((i) => i + 1)}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-edge rounded-lg text-sm font-medium text-ink-2 hover:bg-surface-hover transition-colors"
+                    >
+                      Skip <ChevronRight size={14} />
+                    </button>
+                  )}
+                  <button
+                    onClick={submitCoding}
+                    disabled={submitting}
+                    className="approve-ready flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-60"
+                    style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}
+                  >
+                    {submitting ? (
+                      <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Submitting…</>
+                    ) : (
+                      <><CheckCircle size={14} /> Submit Coding</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-surface-1 text-center px-8">
-          <CheckCircle size={40} className="text-emerald-400" />
-          <p className="text-lg font-bold text-ink">Queue Complete</p>
-          <p className="text-sm text-ink-3">All transactions have been coded. Great work!</p>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-surface-1 text-center px-8">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
+            <CheckCircle size={30} className="text-emerald-500" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-ink mb-1">Queue Complete</p>
+            <p className="text-sm text-ink-3">
+              {coded.size > 0
+                ? `You coded ${coded.size} transaction${coded.size !== 1 ? 's' : ''} this session.`
+                : 'All transactions have been coded.'}
+            </p>
+          </div>
+          <MotivationBar progress={1} message="All caught up — great work!" className="w-56" />
         </div>
       )}
     </div>
