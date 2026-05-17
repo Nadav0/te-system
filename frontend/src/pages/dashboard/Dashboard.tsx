@@ -261,6 +261,15 @@ export default function Dashboard() {
   const dept = user.department ?? 'No department'
   const roleLabel = user.role === 'finance' ? 'Finance Manager' : user.role === 'manager' ? 'Manager' : 'Employee'
 
+  // Client-side sort: pending/submitted items surface first (Recognition over Recall)
+  const PENDING_STATUSES = new Set(['pending', 'submitted', 'under_review'])
+  const sortPendingFirst = <T extends { status?: string }>(items: T[]) =>
+    [...items].sort((a, b) => {
+      const aP = PENDING_STATUSES.has(a.status ?? '') ? 0 : 1
+      const bP = PENDING_STATUSES.has(b.status ?? '') ? 0 : 1
+      return aP - bP
+    })
+
   // Filter trend data based on period
   const periodMonths = period === '7d' ? 1 : period === '30d' ? 3 : 6
   const trendData = (trend as any[])
@@ -298,6 +307,8 @@ export default function Dashboard() {
       </div>
 
       {/* ── Bento KPI Grid ── */}
+      {/* Serial Position Effect: anchor (Total Spend) first, neutral (Reports) second,
+          urgent (Violations) third for recency attention, most actionable (Pending) last. */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <KpiCard
           label="Total Spend"
@@ -307,7 +318,6 @@ export default function Dashboard() {
           icon={Receipt}
           sparkData={spendSpark}
           delta={8.4}
-          wide
         />
         <KpiCard
           label="Reports"
@@ -319,15 +329,6 @@ export default function Dashboard() {
           delta={12.1}
         />
         <KpiCard
-          label="Pending"
-          value={String(pendingApprovals.length).padStart(2, '0')}
-          sub="Avg. 2 days"
-          color="#D97706"
-          icon={Clock}
-          sparkData={pendingSpark}
-          delta={-3.2}
-        />
-        <KpiCard
           label="Violations"
           value={String(violationCount).padStart(2, '0')}
           sub="Policy breaches"
@@ -336,6 +337,15 @@ export default function Dashboard() {
           sparkData={violationSpark}
           delta={violationCount > 0 ? 5.0 : -100}
           invertDelta
+        />
+        <KpiCard
+          label="Pending"
+          value={String(pendingApprovals.length).padStart(2, '0')}
+          sub="Avg. 2 days"
+          color="#D97706"
+          icon={Clock}
+          sparkData={pendingSpark}
+          delta={-3.2}
         />
       </div>
 
@@ -494,7 +504,7 @@ export default function Dashboard() {
             />
           ) : (
             <div className="space-y-0.5">
-              {myExpenses.slice(0, 4).map((exp: any) => {
+              {sortPendingFirst(myExpenses).slice(0, 4).map((exp: any) => {
                 const Icon = getCategoryIcon(exp.items?.[0]?.category)
                 const color = getCategoryColor(exp.items?.[0]?.category)
                 return (
@@ -556,7 +566,7 @@ export default function Dashboard() {
             />
           ) : (
             <div className="space-y-0.5">
-              {myTravels.slice(0, 4).map((tr: any) => (
+              {sortPendingFirst(myTravels).slice(0, 4).map((tr: any) => (
                 <Link
                   key={tr.id}
                   to={`/travel/${tr.id}`}

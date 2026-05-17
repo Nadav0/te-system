@@ -346,12 +346,20 @@ export default function ExpenseList() {
                   <tr key={r.id} className="hover:bg-surface-hover transition-colors">
                     <td className="px-4 py-3 text-ink-3 text-xs whitespace-nowrap">{date(r.created_at)}</td>
                     <td className="px-4 py-3">
-                      <Link to={`/expenses/${r.id}`} className="font-medium text-ink hover:text-brand-600 transition-colors">
-                        <Highlight text={r.title} query={searchQuery} />
-                      </Link>
-                      {r.has_violations && (
-                        <AlertTriangle size={11} className="inline ml-1.5 text-amber-400" />
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Link to={`/expenses/${r.id}`} className="font-medium text-ink hover:text-brand-600 transition-colors">
+                          <Highlight text={r.title} query={searchQuery} />
+                        </Link>
+                        {r.has_violations && (
+                          <span
+                            title="Policy violation(s) detected"
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[10px] font-semibold leading-none flex-shrink-0"
+                          >
+                            <AlertTriangle size={10} className="flex-shrink-0" />
+                            Policy
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Search, X, ChevronUp, ChevronDown, ChevronsUpDown, Plane } from 'lucide-react'
+import { Plus, Trash2, Search, X, ChevronUp, ChevronDown, ChevronsUpDown, Plane, XCircle } from 'lucide-react'
 import { listTravel, deleteTravel } from '../../api/travel'
 import { currency, date } from '../../utils/format'
 import StatusBadge from '../../components/StatusBadge'
@@ -173,19 +173,22 @@ export default function TravelList() {
         )}
       </div>
 
-      {/* Tab strip */}
-      <div className="flex border border-edge rounded-lg overflow-hidden bg-surface-1 w-fit mb-5">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-              activeTab === tab ? 'bg-brand-600 text-white' : 'text-ink-2 hover:bg-surface-hover'
-            }`}
-          >
-            {tab === 'all' ? `All (${all.length})` : tab}
-          </button>
-        ))}
+      {/* Tab strip — labeled group so it reads as a distinct "Status" filter dimension (Hick's Law) */}
+      <div className="flex items-center gap-2 mb-5">
+        <span className="text-xs font-semibold text-ink-3 uppercase tracking-wider select-none">Status:</span>
+        <div className="flex border border-edge rounded-lg overflow-hidden bg-surface-1 w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                activeTab === tab ? 'bg-brand-600 text-white' : 'text-ink-2 hover:bg-surface-hover'
+              }`}
+            >
+              {tab === 'all' ? `All (${all.length})` : tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
@@ -241,7 +244,7 @@ export default function TravelList() {
                       <Plane size={13} className="text-ink-3 flex-shrink-0" />
                       <Highlight text={tr.destination} query={searchQuery} />
                     </Link>
-                    <p className="text-xs text-ink-3 mt-0.5 truncate max-w-xs pl-5">
+                    <p className="text-xs text-ink-3 mt-0.5 truncate max-w-xs pl-5" title={tr.purpose ?? undefined}>
                       <Highlight text={tr.purpose ?? ''} query={searchQuery} />
                     </p>
                   </td>
@@ -258,7 +261,18 @@ export default function TravelList() {
                   <td className="px-4 py-3 text-xs text-ink-3 whitespace-nowrap">
                     {date(tr.departure_date)} → {date(tr.return_date)}
                   </td>
-                  <td className="px-4 py-3"><StatusBadge status={tr.status} /></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={tr.status} />
+                      {tr.status === 'rejected' && (
+                        <XCircle
+                          size={14}
+                          className="text-red-500 flex-shrink-0"
+                          title={tr.review_note ? `Rejected: ${tr.review_note}` : 'Rejected'}
+                        />
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-right font-semibold text-ink tabular-nums">{currency(tr.estimated_budget)}</td>
                   <td className="px-4 py-3 text-right">
                     {tr.status === 'draft' && (

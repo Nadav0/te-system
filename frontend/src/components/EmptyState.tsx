@@ -27,9 +27,9 @@ const illustrations = {
   ),
   approvals: (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M32 8L36.5 18.5L48 20L39.5 28L41.5 40L32 34.5L22.5 40L24.5 28L16 20L27.5 18.5L32 8Z"
-        stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="currentColor" fillOpacity="0.08"/>
-      <path d="M22 48L26 52L38 40" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="32" cy="32" r="22" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="2"/>
+      <path d="M18 32L26 40L46 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M24 32L32 40L52 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.35"/>
     </svg>
   ),
   reports: (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle, CheckCircle, XCircle, Plane, Receipt,
@@ -44,14 +44,19 @@ const CATEGORY_LABELS: Record<string, string> = {
 // ── Inbox row ─────────────────────────────────────────────────────────────────
 
 function ExpenseRow({
-  report, selected, onClick,
-}: { report: ExpenseReport; selected: boolean; onClick: () => void }) {
+  report, selected, onClick, checked, onCheck,
+}: {
+  report: ExpenseReport
+  selected: boolean
+  onClick: () => void
+  checked: boolean
+  onCheck: (e: React.ChangeEvent<HTMLInputElement>) => void
+}) {
   const name = report.employee?.full_name ?? 'Unknown'
   const primaryCat = report.items?.[0]?.category
   return (
-    <button
-      onClick={onClick}
-      className={`relative w-full text-left p-4 border-b border-edge transition-colors ${
+    <div
+      className={`relative w-full border-b border-edge transition-colors ${
         selected ? 'bg-surface-hover' : 'hover:bg-surface-hover'
       }`}
     >
@@ -59,77 +64,124 @@ function ExpenseRow({
       {selected && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-600 rounded-r" />
       )}
-      <div className="flex gap-3 pl-1">
-        {/* Avatar */}
-        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${avatarColor(name)}`}>
-          {initials(name)}
+      <div className="flex items-stretch">
+        {/* Checkbox column */}
+        <div
+          className="flex items-center justify-center pl-3 pr-1 flex-shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onCheck}
+            disabled={!!report.has_violations}
+            title={report.has_violations ? 'Has policy violations — approve individually' : undefined}
+            className="w-3.5 h-3.5 rounded border-edge accent-emerald-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+          />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-0.5">
-            <p className="text-sm font-semibold text-ink truncate">{name}</p>
-            <span className="text-sm font-semibold text-ink tabular-nums ml-2 flex-shrink-0">
-              {currency(report.total_amount)}
-            </span>
+        {/* Row content (clickable) */}
+        <button
+          onClick={onClick}
+          className="flex-1 text-left p-4 pl-2"
+        >
+          <div className="flex gap-3">
+            {/* Avatar */}
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${avatarColor(name)}`}>
+              {initials(name)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between mb-0.5">
+                <p className="text-sm font-semibold text-ink truncate">{name}</p>
+                <span className="text-sm font-semibold text-ink tabular-nums ml-2 flex-shrink-0">
+                  {currency(report.total_amount)}
+                </span>
+              </div>
+              <p className="text-xs text-ink-3 truncate mb-2">{report.title}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {report.has_violations && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded text-[10px] font-semibold">
+                    <AlertTriangle size={9} /> Policy issue
+                  </span>
+                )}
+                {primaryCat && (
+                  <span className="px-1.5 py-0.5 bg-brand-600/10 text-brand-400 rounded text-[10px] font-semibold capitalize">
+                    {CATEGORY_LABELS[primaryCat] ?? primaryCat}
+                  </span>
+                )}
+                <span className="ml-auto text-[10px] text-ink-3 flex-shrink-0">
+                  {timeAgo(report.created_at)}
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-ink-3 truncate mb-2">{report.title}</p>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {report.has_violations && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded text-[10px] font-semibold">
-                <AlertTriangle size={9} /> Policy issue
-              </span>
-            )}
-            {primaryCat && (
-              <span className="px-1.5 py-0.5 bg-brand-600/10 text-brand-400 rounded text-[10px] font-semibold capitalize">
-                {CATEGORY_LABELS[primaryCat] ?? primaryCat}
-              </span>
-            )}
-            <span className="ml-auto text-[10px] text-ink-3 flex-shrink-0">
-              {timeAgo(report.created_at)}
-            </span>
-          </div>
-        </div>
+        </button>
       </div>
-    </button>
+    </div>
   )
 }
 
 function TravelRow({
-  tr, selected, onClick,
-}: { tr: TravelRequest; selected: boolean; onClick: () => void }) {
+  tr, selected, onClick, checked, onCheck,
+}: {
+  tr: TravelRequest
+  selected: boolean
+  onClick: () => void
+  checked: boolean
+  onCheck: (e: React.ChangeEvent<HTMLInputElement>) => void
+}) {
   const name = tr.employee?.full_name ?? 'Unknown'
   return (
-    <button
-      onClick={onClick}
-      className={`relative w-full text-left p-4 border-b border-edge transition-colors ${
+    <div
+      className={`relative w-full border-b border-edge transition-colors ${
         selected ? 'bg-surface-hover' : 'hover:bg-surface-hover'
       }`}
     >
       {selected && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-600 rounded-r" />
       )}
-      <div className="flex gap-3 pl-1">
-        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${avatarColor(name)}`}>
-          {initials(name)}
+      <div className="flex items-stretch">
+        {/* Checkbox column */}
+        <div
+          className="flex items-center justify-center pl-3 pr-1 flex-shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onCheck}
+            className="w-3.5 h-3.5 rounded border-edge accent-emerald-500 cursor-pointer"
+          />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-0.5">
-            <p className="text-sm font-semibold text-ink truncate">{name}</p>
-            <span className="text-sm font-semibold text-ink tabular-nums ml-2 flex-shrink-0">
-              {currency(tr.estimated_budget)}
-            </span>
+        {/* Row content (clickable) */}
+        <button
+          onClick={onClick}
+          className="flex-1 text-left p-4 pl-2"
+        >
+          <div className="flex gap-3">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${avatarColor(name)}`}>
+              {initials(name)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between mb-0.5">
+                <p className="text-sm font-semibold text-ink truncate">{name}</p>
+                <span className="text-sm font-semibold text-ink tabular-nums ml-2 flex-shrink-0">
+                  {currency(tr.estimated_budget)}
+                </span>
+              </div>
+              <p className="text-xs text-ink-3 truncate mb-2">
+                <Plane size={10} className="inline mr-1" />{tr.destination}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="px-1.5 py-0.5 bg-blue-400/10 text-blue-300 rounded text-[10px] font-semibold">
+                  Travel
+                </span>
+                <span className="ml-auto text-[10px] text-ink-3">{timeAgo(tr.created_at)}</span>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-ink-3 truncate mb-2">
-            <Plane size={10} className="inline mr-1" />{tr.destination}
-          </p>
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.5 bg-blue-400/10 text-blue-300 rounded text-[10px] font-semibold">
-              Travel
-            </span>
-            <span className="ml-auto text-[10px] text-ink-3">{timeAgo(tr.created_at)}</span>
-          </div>
-        </div>
+        </button>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -714,10 +766,14 @@ function queueMotivationMsg(reviewed: number, pending: number): string {
 }
 
 export default function ApprovalsPage() {
+  const qc = useQueryClient()
   const [tab, setTab] = useState<Tab>('expenses')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [sessionExpReviewed, setSessionExpReviewed] = useState(0)
   const [sessionTrvReviewed, setSessionTrvReviewed] = useState(0)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const selectAllRef = useRef<HTMLInputElement>(null)
 
   const { data: expenses = [], isLoading: el } = useQuery({
     queryKey: ['expenses'],
@@ -742,10 +798,73 @@ export default function ApprovalsPage() {
   const totalSeen   = tabReviewed + tabPending
   const queueProgress = totalSeen > 0 ? tabReviewed / totalSeen : 0
 
+  // Items eligible for bulk selection (non-violating expenses; all travel)
+  const selectableIds = tab === 'expenses'
+    ? pendingExpenses.filter((e) => !e.has_violations).map((e) => e.id)
+    : pendingTravel.map((t) => t.id)
+
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selectedIds.has(id))
+  const someSelected = !allSelected && selectableIds.some((id) => selectedIds.has(id))
+
+  // Keep the indeterminate state in sync on the DOM node
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected
+    }
+  }, [someSelected])
+
+  // Reset selection when tab changes
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [tab])
+
   // Auto-select first item when list loads or tab switches
   useEffect(() => {
     setSelectedId(activeList[0]?.id ?? null)
   }, [tab, pendingExpenses.length, pendingTravel.length])
+
+  function toggleId(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(selectableIds))
+    }
+  }
+
+  async function handleBulkApprove() {
+    const ids = [...selectedIds]
+    setBulkLoading(true)
+    try {
+      for (const id of ids) {
+        if (tab === 'expenses') {
+          await reviewExpense(id, 'approve')
+        } else {
+          await reviewTravel(id, 'approve')
+        }
+        if (tab === 'expenses') {
+          setSessionExpReviewed((n) => n + 1)
+        } else {
+          setSessionTrvReviewed((n) => n + 1)
+        }
+      }
+    } finally {
+      setBulkLoading(false)
+      setSelectedIds(new Set())
+      if (tab === 'expenses') {
+        qc.invalidateQueries({ queryKey: ['expenses'] })
+      } else {
+        qc.invalidateQueries({ queryKey: ['travel'] })
+      }
+    }
+  }
 
   return (
     // Full height minus the 56px (3.5rem) header
@@ -794,6 +913,40 @@ export default function ApprovalsPage() {
           </div>
         </div>
 
+        {/* Bulk action header — only shown when list has items */}
+        {!el && !tl && activeList.length > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-edge bg-surface-0">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleSelectAll}
+              disabled={selectableIds.length === 0}
+              className="w-3.5 h-3.5 rounded border-edge accent-emerald-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+              title={selectableIds.length === 0 ? 'No items eligible for bulk approval' : 'Select all eligible items'}
+            />
+            <span className="text-[11px] text-ink-3 flex-1">
+              {selectableIds.length === 0
+                ? 'No items eligible'
+                : allSelected
+                  ? `All ${selectableIds.length} selected`
+                  : someSelected
+                    ? `${selectedIds.size} of ${selectableIds.length} selected`
+                    : `Select all (${selectableIds.length})`}
+            </span>
+            {selectedIds.size >= 2 && (
+              <button
+                onClick={handleBulkApprove}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors disabled:opacity-50"
+              >
+                <CheckCircle size={11} />
+                {bulkLoading ? 'Approving…' : `Bulk Approve (${selectedIds.size})`}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Scrollable list */}
         <div className="flex-1 overflow-y-auto">
           {(el || tl) ? (
@@ -811,6 +964,8 @@ export default function ApprovalsPage() {
                 report={r}
                 selected={selectedId === r.id}
                 onClick={() => setSelectedId(r.id)}
+                checked={selectedIds.has(r.id)}
+                onCheck={() => toggleId(r.id)}
               />
             ))
           ) : (
@@ -820,6 +975,8 @@ export default function ApprovalsPage() {
                 tr={tr}
                 selected={selectedId === tr.id}
                 onClick={() => setSelectedId(tr.id)}
+                checked={selectedIds.has(tr.id)}
+                onCheck={() => toggleId(tr.id)}
               />
             ))
           )}

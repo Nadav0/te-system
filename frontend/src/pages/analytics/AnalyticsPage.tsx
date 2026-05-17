@@ -4,10 +4,11 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Tooltip,
   XAxis, YAxis, CartesianGrid, ResponsiveContainer,
 } from 'recharts'
-import { AlertTriangle, Zap, TrendingUp } from 'lucide-react'
+import { AlertTriangle, ArrowUpRight, Zap, TrendingUp } from 'lucide-react'
 import { getSummary, getByEmployee, getByDepartment, getMonthlyTrend, getViolations } from '../../api/analytics'
 import { listExpenses } from '../../api/expenses'
 import { currency, date } from '../../utils/format'
+import { Link, useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader'
 import Spinner from '../../components/Spinner'
 import { useChartTheme } from '../../hooks/useChartTheme'
@@ -165,6 +166,7 @@ function KpiCard({ label, value, color = '#4F46E5', delta }: {
 
 export default function AnalyticsPage() {
   const chart = useChartTheme()
+  const navigate = useNavigate()
   const [period, setPeriod] = useState<Period>('30d')
 
   const { data: summary, isLoading: sl } = useQuery({ queryKey: ['analytics', 'summary'], queryFn: getSummary })
@@ -372,7 +374,13 @@ export default function AnalyticsPage() {
               <Zap size={16} className="text-red-400" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-ink">Risk Anomalies</h3>
+              <Link
+                to="/expenses?filter=flagged"
+                className="group inline-flex items-center gap-1 text-base font-semibold text-ink hover:text-indigo-500 transition-colors"
+              >
+                Risk Anomalies
+                <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
               <p className="text-[11px] text-ink-3">AI-detected policy and spend irregularities</p>
             </div>
           </div>
@@ -387,36 +395,47 @@ export default function AnalyticsPage() {
             <p className="text-emerald-500 text-sm font-medium">No anomalies detected — spend looks clean.</p>
           </div>
         ) : (
-          <div className="space-y-2.5">
-            {anomalies.map((a, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${
-                  a.severity === 'Critical'
-                    ? 'bg-red-400/5 border-red-400/20'
-                    : 'bg-amber-400/5 border-amber-400/20'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  a.severity === 'Critical' ? 'bg-red-400/10' : 'bg-amber-400/10'
-                }`}>
-                  <AlertTriangle size={14} className={a.severity === 'Critical' ? 'text-red-400' : 'text-amber-400'} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-semibold text-ink">{a.title}</p>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
-                      a.severity === 'Critical'
-                        ? 'bg-red-400/15 text-red-400'
-                        : 'bg-amber-400/15 text-amber-400'
-                    }`}>{a.severity}</span>
+          <>
+            <div className="space-y-2.5">
+              {anomalies.map((a, i) => (
+                <div
+                  key={i}
+                  className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${
+                    a.severity === 'Critical'
+                      ? 'bg-red-400/5 border-red-400/20 hover:border-red-400'
+                      : 'bg-amber-400/5 border-amber-400/20 hover:border-amber-400'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    a.severity === 'Critical' ? 'bg-red-400/10' : 'bg-amber-400/10'
+                  }`}>
+                    <AlertTriangle size={14} className={a.severity === 'Critical' ? 'text-red-400' : 'text-amber-400'} />
                   </div>
-                  <p className="text-xs text-ink-3 truncate">{a.detail}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-semibold text-ink">{a.title}</p>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+                        a.severity === 'Critical'
+                          ? 'bg-red-400/15 text-red-400'
+                          : 'bg-amber-400/15 text-amber-400'
+                      }`}>{a.severity}</span>
+                    </div>
+                    <p className="text-xs text-ink-3 truncate">{a.detail}</p>
+                  </div>
+                  <p className="text-sm font-bold text-ink tabular-nums flex-shrink-0">{currency(a.amount)}</p>
                 </div>
-                <p className="text-sm font-bold text-ink tabular-nums flex-shrink-0">{currency(a.amount)}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-4 border-t border-edge flex justify-end">
+              <Link
+                to="/expenses?filter=flagged"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-500 hover:text-indigo-400 transition-colors"
+              >
+                View Flagged Expenses
+                <ArrowUpRight size={13} />
+              </Link>
+            </div>
+          </>
         )}
       </div>
 
@@ -438,7 +457,11 @@ export default function AnalyticsPage() {
             </thead>
             <tbody className="divide-y divide-edge">
               {(byEmployee as any[]).map((emp, i) => (
-                <tr key={emp.id} className="hover:bg-surface-hover transition-colors">
+                <tr
+                  key={emp.id}
+                  className="hover:bg-surface-hover transition-colors cursor-pointer group"
+                  onClick={() => navigate(`/expenses?employee=${encodeURIComponent(emp.name)}`)}
+                >
                   <td className="px-3 py-3 text-ink-3 font-medium tabular-nums">{i + 1}</td>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2.5">
@@ -449,6 +472,7 @@ export default function AnalyticsPage() {
                         {emp.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                       </div>
                       <span className="font-medium text-ink">{emp.name}</span>
+                      <ArrowUpRight size={13} className="text-ink-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </td>
                   <td className="px-3 py-3 text-ink-3">{emp.department ?? '—'}</td>

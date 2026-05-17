@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, Navigate } from 'react-router-dom'
-import { Bell, HelpCircle, ChevronDown, Search, FileText, Plane, User, CheckCheck, Sun, Moon, X, Keyboard, Sparkles } from 'lucide-react'
+import { Bell, HelpCircle, ChevronDown, Search, FileText, Plane, User, CheckCheck, Sun, Moon, X, Keyboard, Sparkles, Clock } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import ChatWidget from '../ChatWidget/ChatWidget'
@@ -120,89 +120,178 @@ function Highlight({ text, query }: { text: string; query: string }) {
  )
 }
 
+const RECENT_SEARCHES_KEY = 'te_recent_searches'
+const MAX_RECENT = 5
+
+function loadRecentSearches(): string[] {
+ try {
+  return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) ?? '[]')
+ } catch {
+  return []
+ }
+}
+
+function saveRecentSearches(searches: string[]) {
+ localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(searches))
+}
+
 function SearchBar() {
  const navigate = useNavigate()
  const [query, setQuery] = useState('')
  const [open, setOpen] = useState(false)
  const [results, setResults] = useState<any[]>([])
  const [loading, setLoading] = useState(false)
+ const [recentSearches, setRecentSearches] = useState<string[]>(loadRecentSearches)
  const ref = useRef<HTMLDivElement>(null)
  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
  useEffect(() => {
- const handler = (e: MouseEvent) => {
- if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
- }
- document.addEventListener('mousedown', handler)
- return () => document.removeEventListener('mousedown', handler)
+  const handler = (e: MouseEvent) => {
+   if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+  }
+  document.addEventListener('mousedown', handler)
+  return () => document.removeEventListener('mousedown', handler)
  }, [])
 
- const handleChange = (val: string) => {
- setQuery(val)
- if (timerRef.current) clearTimeout(timerRef.current)
- if (val.trim().length < 2) { setResults([]); setOpen(false); return }
- timerRef.current = setTimeout(async () => {
- setLoading(true)
- try {
- const data = await searchApi(val.trim())
- setResults(data)
- setOpen(true)
- } catch {
- setResults([])
- } finally {
- setLoading(false)
- }
- }, 300)
+ const pushRecent = (term: string) => {
+  const trimmed = term.trim()
+  if (!trimmed) return
+  const updated = [trimmed, ...recentSearches.filter((s) => s !== trimmed)].slice(0, MAX_RECENT)
+  setRecentSearches(updated)
+  saveRecentSearches(updated)
  }
 
- const handleSelect = (item: any) => {
- if (item.url) navigate(item.url)
- setOpen(false)
- setQuery('')
+ const clearRecent = (e: React.MouseEvent) => {
+  e.stopPropagation()
+  setRecentSearches([])
+  saveRecentSearches([])
+ }
+
+ const handleChange = (val: string) => {
+  setQuery(val)
+  if (timerRef.current) clearTimeout(timerRef.current)
+  if (val.trim().length < 2) { setResults([]); setOpen(val === '' ? recentSearches.length > 0 : false); return }
+  timerRef.current = setTimeout(async () => {
+   setLoading(true)
+   try {
+    const data = await searchApi(val.trim())
+    setResults(data)
+    setOpen(true)
+   } catch {
+    setResults([])
+   } finally {
+    setLoading(false)
+   }
+  }, 300)
+ }
+
+ const handleSelect = (item: any, term?: string) => {
+  if (item.url) navigate(item.url)
+  pushRecent(term ?? query)
+  setOpen(false)
+  setQuery('')
+ }
+
+ const handleRecentClick = (term: string) => {
+  setQuery(term)
+  setOpen(false)
+  if (timerRef.current) clearTimeout(timerRef.current)
+  timerRef.current = setTimeout(async () => {
+   setLoading(true)
+   try {
+    const data = await searchApi(term)
+    setResults(data)
+    setOpen(true)
+   } catch {
+    setResults([])
+   } finally {
+    setLoading(false)
+   }
+  }, 0)
+ }
+
+ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === 'Enter' && query.trim()) {
+   pushRecent(query)
+  }
+ }
+
+ const handleFocus = () => {
+  if (query === '' && recentSearches.length > 0) setOpen(true)
+  else if (results.length > 0) setOpen(true)
  }
 
  const typeIcon = (type: string) => {
- if (type === 'expense') return <FileText size={13} className="text-ink-3" />
- if (type === 'travel') return <Plane size={13} className="text-ink-3" />
- return <User size={13} className="text-ink-3" />
+  if (type === 'expense') return <FileText size={13} className="text-ink-3" />
+  if (type === 'travel') return <Plane size={13} className="text-ink-3" />
+  return <User size={13} className="text-ink-3" />
  }
 
+ const showRecent = open && query === '' && recentSearches.length > 0
+ const showResults = open && query.trim().length >= 2
+
  return (
- <div ref={ref} className="relative flex-1 max-w-sm">
- <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
- <input
- type="text"
- placeholder="Search or type ⌘K"
- value={query}
- onChange={(e) => handleChange(e.target.value)}
- onFocus={() => results.length > 0 && setOpen(true)}
- className="w-full pl-9 pr-4 py-2 text-sm bg-surface-0 border border-edge rounded-xl text-ink placeholder:text-ink-3 focus:outline-none focus:border-brand-600/60 focus:ring-2 focus:ring-brand-600/10 transition-all"
- />
- {open && (
- <div className="absolute left-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-30 w-80">
- {loading ? (
- <div className="px-4 py-3 text-sm text-ink-3">Searching…</div>
- ) : results.length === 0 ? (
- <div className="px-4 py-3 text-sm text-ink-3">No results for "{query}"</div>
- ) : (
- results.map((r) => (
- <button
- key={r.id}
- onClick={() => handleSelect(r)}
- className="w-full text-left px-4 py-2.5 hover:bg-surface-hover flex items-center gap-3 border-b border-edge last:border-0 transition-colors"
- >
- <div className="flex-shrink-0">{typeIcon(r.type)}</div>
- <div className="flex-1 min-w-0">
- <p className="text-sm font-medium text-ink truncate"><Highlight text={r.title} query={query} /></p>
- <p className="text-xs text-ink-3 truncate"><Highlight text={r.sub ?? ''} query={query} /></p>
- </div>
- <span className="text-[10px] text-ink-3/60 uppercase tracking-wider flex-shrink-0">{r.type}</span>
- </button>
- ))
- )}
- </div>
- )}
- </div>
+  <div ref={ref} className="relative flex-1 max-w-sm">
+   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+   <input
+    type="text"
+    placeholder="Search or type ⌘K"
+    value={query}
+    onChange={(e) => handleChange(e.target.value)}
+    onFocus={handleFocus}
+    onKeyDown={handleKeyDown}
+    className="w-full pl-9 pr-4 py-2 text-sm bg-surface-0 border border-edge rounded-xl text-ink placeholder:text-ink-3 focus:outline-none focus:border-brand-600/60 focus:ring-2 focus:ring-brand-600/10 transition-all"
+   />
+   {showRecent && (
+    <div className="absolute left-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-30 w-80">
+     <div className="flex items-center justify-between px-4 py-2 border-b border-edge">
+      <span className="flex items-center gap-1.5 text-[11px] font-semibold text-ink-3 uppercase tracking-wider">
+       <Clock size={11} /> Recent
+      </span>
+      <button
+       onClick={clearRecent}
+       className="text-[11px] text-ink-3 hover:text-ink transition-colors"
+      >
+       Clear
+      </button>
+     </div>
+     {recentSearches.map((term) => (
+      <button
+       key={term}
+       onClick={() => handleRecentClick(term)}
+       className="w-full text-left px-4 py-2.5 hover:bg-surface-hover flex items-center gap-3 border-b border-edge last:border-0 transition-colors"
+      >
+       <Clock size={13} className="text-ink-3 flex-shrink-0" />
+       <span className="text-sm text-ink-2 truncate">{term}</span>
+      </button>
+     ))}
+    </div>
+   )}
+   {showResults && (
+    <div className="absolute left-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-30 w-80">
+     {loading ? (
+      <div className="px-4 py-3 text-sm text-ink-3">Searching…</div>
+     ) : results.length === 0 ? (
+      <div className="px-4 py-3 text-sm text-ink-3">No results for "{query}"</div>
+     ) : (
+      results.map((r) => (
+       <button
+        key={r.id}
+        onClick={() => handleSelect(r, query)}
+        className="w-full text-left px-4 py-2.5 hover:bg-surface-hover flex items-center gap-3 border-b border-edge last:border-0 transition-colors"
+       >
+        <div className="flex-shrink-0">{typeIcon(r.type)}</div>
+        <div className="flex-1 min-w-0">
+         <p className="text-sm font-medium text-ink truncate"><Highlight text={r.title} query={query} /></p>
+         <p className="text-xs text-ink-3 truncate"><Highlight text={r.sub ?? ''} query={query} /></p>
+        </div>
+        <span className="text-[10px] text-ink-3/60 uppercase tracking-wider flex-shrink-0">{r.type}</span>
+       </button>
+      ))
+     )}
+    </div>
+   )}
+  </div>
  )
 }
 
