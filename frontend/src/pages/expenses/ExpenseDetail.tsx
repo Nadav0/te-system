@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, Upload, AlertTriangle, ChevronLeft, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Trash2, Upload, AlertTriangle, ChevronLeft, CheckCircle, XCircle, PartyPopper } from 'lucide-react'
 import {
  getExpense, addItem, deleteItem, deleteExpense, submitExpense, reviewExpense, uploadReceipt,
 } from '../../api/expenses'
@@ -13,6 +13,7 @@ import { currency, date, categoryLabel } from '../../utils/format'
 import StatusBadge from '../../components/StatusBadge'
 import PageHeader from '../../components/PageHeader'
 import Spinner from '../../components/Spinner'
+import { useToast } from '../../components/Toast'
 import type { ExpenseItem } from '../../types'
 
 const CATEGORIES = ['meals', 'transport', 'lodging', 'conference', 'other']
@@ -28,8 +29,11 @@ type ItemForm = z.infer<typeof itemSchema>
 export default function ExpenseDetail() {
  const { id } = useParams<{ id: string }>()
  const navigate = useNavigate()
+ const location = useLocation()
  const user = useAuthStore((s) => s.user)!
  const qc = useQueryClient()
+ const toast = useToast()
+ const justSubmitted = (location.state as any)?.submitted === true
 
  const [showItemForm, setShowItemForm] = useState(false)
  const [confirmDelete, setConfirmDelete] = useState(false)
@@ -62,7 +66,14 @@ export default function ExpenseDetail() {
  const reviewMutation = useMutation({
  mutationFn: ({ action }: { action: 'approve' | 'reject' }) =>
  reviewExpense(id!, action, reviewNote || undefined),
- onSuccess: () => { invalidate(); setReviewNote(''); setReviewError('') },
+ onSuccess: (_, vars) => {
+   invalidate()
+   setReviewNote('')
+   setReviewError('')
+   const name = report?.employee?.full_name?.split(' ')[0] ?? 'Employee'
+   if (vars.action === 'approve') toast(`Approved. ${name} will be notified.`, 'success')
+   else toast(`Rejected. ${name} will be notified.`, 'info')
+ },
  onError: (e: any) => setReviewError(e.response?.data?.detail ?? 'Failed'),
  })
 
@@ -103,6 +114,17 @@ export default function ExpenseDetail() {
  <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-ink-3 hover:text-ink mb-4">
  <ChevronLeft size={16} /> Back to Expenses
  </button>
+
+ {/* Post-submit success banner */}
+ {justSubmitted && (
+   <div className="mb-6 flex items-center gap-3 px-5 py-4 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
+     <PartyPopper size={18} className="text-emerald-500 flex-shrink-0" />
+     <div>
+       <p className="text-sm font-semibold text-ink">Report submitted for approval!</p>
+       <p className="text-xs text-ink-3 mt-0.5">Your manager has been notified and will review it shortly.</p>
+     </div>
+   </div>
+ )}
 
  <PageHeader
  title={report.title}

@@ -5,6 +5,8 @@ import { listReimbursementQueue, markPaid, listExpenses } from '../../api/expens
 import { currency } from '../../utils/format'
 import type { ExpenseReport } from '../../types'
 import Spinner from '../../components/Spinner'
+import MotivationBar from '../../components/MotivationBar'
+import { useToast } from '../../components/Toast'
 
 function exportSelectedCSV(reports: ExpenseReport[], selected: Set<string>) {
  const rows = [
@@ -30,9 +32,11 @@ function exportSelectedCSV(reports: ExpenseReport[], selected: Set<string>) {
 
 export default function ReimbursementQueue() {
  const qc = useQueryClient()
+ const toast = useToast()
  const [activeTab, setActiveTab] = useState<'reimburse' | 'flagged'>('reimburse')
  const [selected, setSelected] = useState<Set<string>>(new Set())
  const [justPaid, setJustPaid] = useState<Set<string>>(new Set())
+ const [sessionPaidCount, setSessionPaidCount] = useState(0)
 
  const { data: queue = [], isLoading: qLoading } = useQuery<ExpenseReport[]>({
  queryKey: ['reimbursement-queue'],
@@ -54,25 +58,30 @@ export default function ReimbursementQueue() {
  onSuccess: (_, id) => {
  setJustPaid((prev) => new Set(prev).add(id))
  setSelected((prev) => { const n = new Set(prev); n.delete(id); return n })
+ setSessionPaidCount((n) => n + 1)
  qc.invalidateQueries({ queryKey: ['reimbursement-queue'] })
  qc.invalidateQueries({ queryKey: ['expenses'] })
  qc.invalidateQueries({ queryKey: ['analytics'] })
+ toast('Marked as paid.', 'success')
  },
  onError: () => setMarkPaidError('Failed to mark as paid. Please try again.'),
  })
 
  const processSelected = async () => {
+ const count = selected.size
  setProcessing(true)
  setMarkPaidError('')
  try {
  for (const id of Array.from(selected)) {
  await markPaid(id)
  setJustPaid((prev) => new Set(prev).add(id))
+ setSessionPaidCount((n) => n + 1)
  }
  setSelected(new Set())
  qc.invalidateQueries({ queryKey: ['reimbursement-queue'] })
  qc.invalidateQueries({ queryKey: ['expenses'] })
  qc.invalidateQueries({ queryKey: ['analytics'] })
+ toast(`${count} payment${count !== 1 ? 's' : ''} processed successfully.`, 'success')
  } catch {
  setMarkPaidError('Some payments failed to process. Please retry.')
  } finally {
@@ -82,6 +91,15 @@ export default function ReimbursementQueue() {
 
  const isLoading = qLoading || fLoading
  if (isLoading) return <Spinner className="h-96" />
+
+ const totalSeen = sessionPaidCount + (queue as ExpenseReport[]).length
+ const queueProgress = totalSeen > 0 ? sessionPaidCount / totalSeen : 0
+ const queueMsg =
+   totalSeen === 0     ? 'No items pending reimbursement' :
+   sessionPaidCount === 0 ? `${queue.length} item${queue.length !== 1 ? 's' : ''} ready to process` :
+   queueProgress < 0.5   ? `${queue.length} remaining — keep going!` :
+   queueProgress < 1     ? 'More than halfway there!' :
+                            'Queue cleared — great work!'
 
  const pendingTotal = (queue as ExpenseReport[]).reduce((sum, r) => sum + r.total_amount, 0)
  const selectedTotal = (queue as ExpenseReport[])
@@ -124,6 +142,13 @@ export default function ReimbursementQueue() {
  </div>
  </div>
  </div>
+
+ {/* Queue progress */}
+ {totalSeen > 0 && (
+   <div className="mb-5">
+     <MotivationBar progress={queueProgress} message={queueMsg} />
+   </div>
+ )}
 
  {/* Tabs */}
  <div className="border-b border-edge mb-4">

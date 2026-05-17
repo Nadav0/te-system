@@ -90,6 +90,7 @@ export default function ExpenseList() {
   const [timeFilter, setTimeFilter] = useState('All Time')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [catOpen, setCatOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -230,7 +231,7 @@ export default function ExpenseList() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
         {/* Tab strip */}
         <div className="flex border border-edge rounded-lg overflow-hidden bg-surface-1 flex-shrink-0">
           {TABS.map((tab) => (
@@ -246,51 +247,88 @@ export default function ExpenseList() {
           ))}
         </div>
 
-        {/* Time filter */}
-        <div className="flex gap-1 ml-auto">
-          {TIME_FILTERS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTimeFilter(t)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                timeFilter === t ? 'bg-surface-2 text-ink border border-edge-hi' : 'text-ink-3 hover:bg-surface-hover'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        {/* Filters toggle button */}
+        <button
+          onClick={() => setFiltersOpen((v) => !v)}
+          className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-medium transition-colors ${
+            filtersOpen || timeFilter !== 'All Time' || categoryFilter !== 'all'
+              ? 'border-brand-600/40 bg-brand-600/5 text-brand-600'
+              : 'border-edge text-ink-2 hover:bg-surface-hover'
+          }`}
+        >
+          <Filter size={12} />
+          Filters
+          {(timeFilter !== 'All Time' || categoryFilter !== 'all') && (
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
+          )}
+          <ChevronDown size={11} className={`transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
 
-        {/* Category dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setCatOpen(!catOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-edge rounded-lg text-xs font-medium text-ink-2 hover:bg-surface-hover transition-colors"
-          >
-            <Filter size={12} />
-            Category: {categoryFilter === 'all' ? 'All' : categoryFilter}
-            <ChevronDown size={11} />
-          </button>
-          {catOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setCatOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-20 py-1 min-w-[140px]">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => { setCategoryFilter(cat); setCatOpen(false) }}
-                    className={`w-full text-left px-3 py-2 text-sm capitalize hover:bg-surface-hover transition-colors ${
-                      categoryFilter === cat ? 'text-brand-600 font-semibold' : 'text-ink-2'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </>
+      {/* Expandable filter row */}
+      {filtersOpen && (
+        <div className="flex items-center gap-3 mb-5 flex-wrap p-3 bg-surface-1 border border-edge rounded-lg">
+          {/* Time filter */}
+          <div className="flex gap-1">
+            <span className="text-xs font-semibold text-ink-3 uppercase tracking-wider self-center mr-1">Period</span>
+            {TIME_FILTERS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTimeFilter(t)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  timeFilter === t ? 'bg-surface-2 text-ink border border-edge-hi' : 'text-ink-3 hover:bg-surface-hover'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-px h-4 bg-edge mx-1" />
+
+          {/* Category dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-ink-3 uppercase tracking-wider">Category</span>
+            <div className="relative">
+              <button
+                onClick={() => setCatOpen(!catOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-edge rounded-lg text-xs font-medium text-ink-2 hover:bg-surface-hover transition-colors"
+              >
+                {categoryFilter === 'all' ? 'All categories' : categoryFilter}
+                <ChevronDown size={11} />
+              </button>
+              {catOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setCatOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-20 py-1 min-w-[140px]">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => { setCategoryFilter(cat); setCatOpen(false) }}
+                        className={`w-full text-left px-3 py-2 text-sm capitalize hover:bg-surface-hover transition-colors ${
+                          categoryFilter === cat ? 'text-brand-600 font-semibold' : 'text-ink-2'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {(timeFilter !== 'All Time' || categoryFilter !== 'all') && (
+            <button
+              onClick={() => { setTimeFilter('All Time'); setCategoryFilter('all') }}
+              className="ml-auto text-xs text-ink-3 hover:text-ink transition-colors flex items-center gap-1"
+            >
+              <X size={11} /> Clear filters
+            </button>
           )}
         </div>
-      </div>
+      )}
+      {!filtersOpen && <div className="mb-2" />}
 
       {/* Table */}
       {isLoading ? (

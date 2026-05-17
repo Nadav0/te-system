@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useToast } from '../../components/Toast'
 import {
   AlertTriangle, CheckCircle, XCircle, Plane, Receipt,
   RotateCcw, CreditCard, Calendar, Tag, User, FileText,
@@ -194,6 +195,7 @@ function ExpenseDetail({ id, position, total, onReviewed }: {
   onReviewed?: () => void
 }) {
   const qc = useQueryClient()
+  const toast = useToast()
   const [reviewNote, setReviewNote] = useState('')
   const [showNote, setShowNote] = useState(false)
   const [lastAction, setLastAction] = useState<'approve' | 'reject' | 'changes' | null>(null)
@@ -215,6 +217,10 @@ function ExpenseDetail({ id, position, total, onReviewed }: {
       setReviewNote('')
       setShowNote(false)
       onReviewed?.()
+      const name = report?.employee?.full_name?.split(' ')[0] ?? 'Employee'
+      if (act === 'approve') toast(`Approved. ${name} will be notified.`, 'success')
+      else if (act === 'reject') toast(`Rejected. ${name} will be notified.`, 'info')
+      else toast(`Changes requested. ${name} will be notified.`, 'info')
     },
   })
 
@@ -532,6 +538,7 @@ function TravelDetail({ id, position, total, onReviewed }: {
   onReviewed?: () => void
 }) {
   const qc = useQueryClient()
+  const toast = useToast()
   const [reviewNote, setReviewNote] = useState('')
   const [showNote, setShowNote] = useState(false)
   const [lastAction, setLastAction] = useState<'approve' | 'reject' | null>(null)
@@ -552,6 +559,9 @@ function TravelDetail({ id, position, total, onReviewed }: {
       setReviewNote('')
       setShowNote(false)
       onReviewed?.()
+      const name = tr?.employee?.full_name?.split(' ')[0] ?? 'Employee'
+      if (vars.action === 'approve') toast(`Travel approved. ${name} will be notified.`, 'success')
+      else toast(`Travel rejected. ${name} will be notified.`, 'info')
     },
   })
 

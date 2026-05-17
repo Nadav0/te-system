@@ -454,7 +454,10 @@ function Header() {
  <>
  <div className="fixed inset-0 z-10" onClick={() => setRoleOpen(false)} />
  <div className="absolute right-0 top-full mt-1 bg-surface-2 border border-edge-hi rounded-xl z-20 min-w-[180px] py-1">
- <p className="px-3 py-1.5 text-xs text-ink-3 uppercase tracking-wider font-semibold">Switch Role</p>
+ <div className="px-3 py-2 border-b border-edge">
+  <p className="text-xs font-semibold text-ink">Switch Role</p>
+  <p className="text-[10px] text-ink-3 mt-0.5">Demo mode — no real data changes</p>
+</div>
  {ROLE_OPTIONS.map((opt) => (
  <button
  key={opt.key}

@@ -168,7 +168,7 @@ export default function ExpenseForm() {
     try {
       await submitExpense(reportId)
       await qc.invalidateQueries({ queryKey: ['expenses'] })
-      navigate(`/expenses/${reportId}`)
+      navigate(`/expenses/${reportId}`, { state: { submitted: true } })
     } catch (e: any) {
       setItemError(e.response?.data?.detail ?? 'Failed to submit')
       setSubmitting(false)

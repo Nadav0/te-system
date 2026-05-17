@@ -57,6 +57,15 @@
   }
 }
 
+/* ── Toast slide-up animation ────────────────────────────────────────────────── */
+@keyframes toast-enter {
+  0%   { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+.toast-enter {
+  animation: toast-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* ── Gradient Motivation — submit button glow when form is complete ─────────── */
 @keyframes motivation-glow {
   0%, 100% { box-shadow: 0 0 0 0px rgba(92, 102, 245, 0); }

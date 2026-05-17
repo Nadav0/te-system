@@ -265,11 +265,9 @@ export default function TravelList() {
                     <div className="flex items-center gap-1.5">
                       <StatusBadge status={tr.status} />
                       {tr.status === 'rejected' && (
-                        <XCircle
-                          size={14}
-                          className="text-red-500 flex-shrink-0"
-                          title={tr.review_note ? `Rejected: ${tr.review_note}` : 'Rejected'}
-                        />
+                        <span title={tr.review_note ? `Rejected: ${tr.review_note}` : 'Rejected'}>
+                          <XCircle size={14} className="text-red-500 flex-shrink-0" />
+                        </span>
                       )}
                     </div>
                   </td>
